@@ -1,43 +1,97 @@
 export default class IntroScene extends Phaser.Scene {
+  constructor() {
+    super("IntroScene");
 
-    constructor() {
-        super('IntroScene');
+    this.videoKeys = ["intro1", "intro2"];
+    this.currentIndex = 0;
+  }
+
+  preload() {
+    this.load.video("intro1", "assets/cinematicas/Intro1.mp4");
+    this.load.video("intro2", "assets/cinematicas/Intro2.mp4");
+  }
+
+  create() {
+    this.cameras.main.setBackgroundColor("#000000");
+
+    // Habilitar skip con clic
+    this.input.on("pointerdown", () => this.skipVideo());
+
+    this.playNextVideo();
+  }
+
+  playNextVideo() {
+    const { width, height } = this.game.config;
+
+    // Si ya no hay más videos → ir al menú
+    if (this.currentIndex >= this.videoKeys.length) {
+      this.goToMenu();
+      return;
     }
 
-    preload() {
-        this.load.image('background', 'assets/space.png');
-        this.load.image('logo', 'assets/phaser.png');
-        this.load.spritesheet('ship', 'assets/spaceship.png', { frameWidth: 176, frameHeight: 96 });
+    const key = this.videoKeys[this.currentIndex];
+
+    // Destruir video anterior
+    if (this.currentVideo) {
+      this.currentVideo.stop();
+      this.currentVideo.destroy();
+      this.currentVideo = null;
     }
 
-    create() {
-        this.background = this.add.tileSprite(800, 450, 1600, 900, 'background');
+    // Crear video
+    this.currentVideo = this.add
+      .video(width / 2, height / 2, key)
+      .setOrigin(0.5);
 
-        const logo = this.add.image(800, 300, 'logo');
+    const videoElement = this.currentVideo.video;
 
-        const ship = this.add.sprite(800, 450, 'ship');
+    // ❗ Silenciar
+    videoElement.muted = true;
+    videoElement.volume = 0;
 
-        ship.anims.create({
-            key: 'fly',
-            frames: this.anims.generateFrameNumbers('ship', { start: 0, end: 2 }),
-            frameRate: 15,
-            repeat: -1
-        });
+    // Ajustar tamaño al canvas
+    const setFillCanvasSize = () => {
+      this.currentVideo.setDisplaySize(width, height);
+    };
 
-        ship.play('fly');
+    videoElement.onloadedmetadata = setFillCanvasSize;
+    setFillCanvasSize();
 
-        this.tweens.add({
-            targets: ship,
-            y: 400,
-            duration: 1500,
-            ease: 'Sine.inOut',
-            yoyo: true,
-            loop: -1
-        });
+    // Cuando termine → pasar a siguiente video
+    this.currentVideo.once("complete", () => {
+      this.currentIndex++;
+      this.playNextVideo();
+    });
+
+    this.currentVideo.play(false); // sin loop
+  }
+
+  /** Saltar video con clic */
+  skipVideo() {
+    // Si estamos en el último video → ir al menú
+    if (this.currentIndex >= this.videoKeys.length - 1) {
+      this.goToMenu();
+      return;
     }
 
-    update() {
-        this.background.tilePositionX += 2;
+    // Sino, pasar al siguiente video
+    this.currentIndex++;
+    this.playNextVideo();
+  }
+
+  goToMenu() {
+    if (this.currentVideo) {
+      this.currentVideo.stop();
+      this.currentVideo.destroy();
     }
-    
+
+    this.cameras.main.fadeOut(500, 0, 0, 0);
+
+    this.cameras.main.once("camerafadeoutcomplete", () => {
+      this.scene.start("TransitionScene", {
+        fromScene: this.scene.key,
+        toScene: "MainMenuScene",
+      });
+    });
+  }
 }

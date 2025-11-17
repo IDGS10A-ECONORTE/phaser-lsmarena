@@ -1,10 +1,10 @@
 // Importar escenas
 import IntroScene from "./scenes/IntroScene.js";
-// import MainMenuScene from "./scenes/MainMenuScene.js";
-// import CharacterSelectScene from "./scenes/CharacterSelectScene.js";
+import MainMenuScene from "./scenes/MainMenuScene.js";
+import CharacterSelectScene from "./scenes/CharacterSelectScene.js";
 // import TutorialSelectScene from "./scenes/TutorialSelectScene.js";
 // import TutorialScene from "./scenes/TutorialScene.js";
-// import TransitionScene from "./scenes/TransitionScene.js";
+import TransitionScene from "./scenes/TransitionScene.js";
 
 // import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
 // import Minigame1Scene from "./scenes/minigames/Minigame1Scene.js";
@@ -30,9 +30,9 @@ const config = {
   pixelArt: false,
   scene: [
     IntroScene,
-    // MainMenuScene,
-    // TransitionScene,
-    // CharacterSelectScene,
+    MainMenuScene,
+    TransitionScene,
+    CharacterSelectScene,
     // TutorialSelectScene,
     // TutorialScene,
     // MinigameHubScene,
