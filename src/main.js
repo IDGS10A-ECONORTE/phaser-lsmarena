@@ -1,10 +1,11 @@
 // Importar escenas
 import IntroScene from "./scenes/IntroScene.js";
+import TransitionScene from "./scenes/TransitionScene.js";
 import MainMenuScene from "./scenes/MainMenuScene.js";
 import CharacterSelectScene from "./scenes/CharacterSelectScene.js";
-// import TutorialSelectScene from "./scenes/TutorialSelectScene.js";
-// import TutorialScene from "./scenes/TutorialScene.js";
-import TransitionScene from "./scenes/TransitionScene.js";
+import TutorialSelectScene from "./scenes/TutorialSelectScene.js";
+import TutorialScene from "./scenes/TutorialScene.js";
+
 
 // import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
 // import Minigame1Scene from "./scenes/minigames/Minigame1Scene.js";
@@ -14,10 +15,10 @@ import TransitionScene from "./scenes/TransitionScene.js";
 // import Minigame5Scene from "./scenes/minigames/Minigame5Scene.js";
 
 // import PerformanceEvaluationScene from "./scenes/PerformanceScene.js";
-// import VictoryScene from "./scenes/VictoryScene.js";
-// import DefeatScene from "./scenes/DefeatScene.js";
+import VictoryScene from "./scenes/VictoryScene.js";
+import DefeatScene from "./scenes/DefeatScene.js";
 // import StatsScene from "./scenes/StatsScene.js";
-// import CreditsScene from "./scenes/CreditsScene.js";
+import CreditsScene from "./scenes/CreditsScene.js";
 
 const config = {
   type: Phaser.AUTO,
@@ -33,8 +34,8 @@ const config = {
     MainMenuScene,
     TransitionScene,
     CharacterSelectScene,
-    // TutorialSelectScene,
-    // TutorialScene,
+    TutorialSelectScene,
+    TutorialScene,
     // MinigameHubScene,
     // Minigame1Scene,
     // Minigame2Scene,
@@ -42,10 +43,10 @@ const config = {
     // Minigame4Scene,
     // Minigame5Scene,
     // PerformanceEvaluationScene,
-    // VictoryScene,
-    // DefeatScene,
+    VictoryScene,
+    DefeatScene,
     // StatsScene,
-    // CreditsScene,
+    CreditsScene,
   ],
   scale: {
     mode: Phaser.Scale.FIT,
