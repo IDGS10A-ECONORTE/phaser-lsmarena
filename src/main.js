@@ -7,7 +7,7 @@ import TutorialSelectScene from "./scenes/TutorialSelectScene.js";
 import TutorialScene from "./scenes/TutorialScene.js";
 
 
-// import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
+import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
 // import Minigame1Scene from "./scenes/minigames/Minigame1Scene.js";
 // import Minigame2Scene from "./scenes/minigames/Minigame2Scene.js";
 // import Minigame3Scene from "./scenes/minigames/Minigame3Scene.js";
@@ -36,7 +36,7 @@ const config = {
     CharacterSelectScene,
     TutorialSelectScene,
     TutorialScene,
-    // MinigameHubScene,
+    MinigameHubScene,
     // Minigame1Scene,
     // Minigame2Scene,
     // Minigame3Scene,

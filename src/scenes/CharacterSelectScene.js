@@ -220,16 +220,53 @@ export default class CharacterSelectScene extends Phaser.Scene {
     return { bg, border, text, btn: hitbox };
   }
 
+  showAlert(message) {
+    const { width, height } = this.game.config;
+
+    // Fondo semitransparente
+    const alertBg = this.add
+      .rectangle(width / 2, height / 2, 500, 80, 0x000000, 0.7)
+      .setOrigin(0.5);
+
+    // Texto de alerta
+    const alertText = this.add
+      .text(width / 2, height / 2, message, {
+        fontFamily: "Arial",
+        fontSize: "32px",
+        color: "#ffffff",
+        align: "center",
+        wordWrap: { width: 460 },
+      })
+      .setOrigin(0.5);
+
+    // Tween para desaparecer después de 2 segundos
+    this.tweens.add({
+      targets: [alertBg, alertText],
+      alpha: 0,
+      duration: 2000,
+      ease: "Power1",
+      onComplete: () => {
+        alertBg.destroy();
+        alertText.destroy();
+      },
+    });
+  }
+
+  // -----------------------------
+  // Confirmar selección
+  // -----------------------------
   confirmSelection() {
     if (!this.selectedCharacter) {
-      alert("Selecciona un personaje primero");
+      this.showAlert("Selecciona un personaje primero");
       return;
     }
 
     // Deshabilitar timer al iniciar juego
     if (this.inactivityTimer) this.inactivityTimer.remove(false);
-    this.timerText.destroy();
-    this.timerText = null;
+    if (this.timerText) {
+      this.timerText.destroy();
+      this.timerText = null;
+    }
 
     this.scene.start("TutorialSelectScene", {
       character: this.selectedCharacter,

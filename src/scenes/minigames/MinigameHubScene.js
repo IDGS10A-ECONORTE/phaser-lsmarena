@@ -1,117 +1,128 @@
-export default class TutorialSelectScene extends Phaser.Scene {
+export default class MinigameHubScene extends Phaser.Scene {
   constructor() {
-    super("TutorialSelectScene");
-    this.inactivityTimer = null;
-    this.inactivityDelay = 180; // segundos
-    this.remainingTime = this.inactivityDelay;
+    super("MinigameHubScene");
+
+    // Lista de minijuegos / niveles (asigna imágenes manualmente)
+    this.minigames = [
+      { id: "level1", name: "Nivel 1", img: "" },
+      { id: "level2", name: "Nivel 2", img: "" },
+      { id: "level3", name: "Nivel 3", img: "" },
+      { id: "level4", name: "Nivel 4", img: "" },
+      { id: "level5", name: "Nivel 5", img: "" },
+    ];
   }
 
   preload() {
-    this.load.image("tutorialBg", "assets/102.png"); // Fondo
-    this.load.image("btnTransparent", "assets/blank.png");
+    // Fondo de la escena (asigna tu asset)
+    // this.load.image("hubBg", "ruta/a/tu/fondo.png");
+    // Imagen transparente para hitbox si es necesario
+    // this.load.image("btnTransparent", "assets/blank.png");
+    // Botón de competencia (opcional imagen)
+    // this.load.image("competitionBtn", "ruta/a/imagen.png");
   }
 
   create() {
     const { width, height } = this.game.config;
 
-    // Fondo
-    const bg = this.add.image(0, 0, "tutorialBg").setOrigin(0);
-    bg.setDisplaySize(width, height);
+    // -----------------------------
+    // Fondo (asignar manualmente)
+    // -----------------------------
+    // const bg = this.add.image(0, 0, "hubBg").setOrigin(0).setDisplaySize(width, height);
 
-    // Caja central
-    const boxWidth = 700;
-    const boxHeight = 300;
-    const box = this.add.rectangle(width / 2, height / 2, boxWidth, boxHeight, 0x000000, 0.6).setOrigin(0.5);
+    // -----------------------------
+    // Botón grande de competencia
+    // -----------------------------
+    const compWidth = 600;
+    const compHeight = 120;
+    const compX = width / 2;
+    const compY = 120;
 
-    // Texto de pregunta
-    this.add.text(width / 2, height / 2 - 50, "¿Deseas jugar el tutorial?", {
-      fontFamily: "Arial",
-      fontSize: "42px",
-      color: "#ffffff",
-      align: "center"
-    }).setOrigin(0.5);
+    const compContainer = this.add.container(compX, compY);
 
-    // Botón Sí
-    this.createButton(width / 2 - 150, height / 2 + 70, 200, 70, "SÍ", () => {
-      this.disableTimer();
-      this.scene.start("TransitionScene", { fromScene: this.scene.key, toScene: "TutorialScene" });
-    });
+    const compBg = this.add
+      .rectangle(0, 0, compWidth, compHeight, 0x000000, 0.6)
+      .setOrigin(0.5);
 
-    // Botón No
-    this.createButton(width / 2 + 150, height / 2 + 70, 200, 70, "NO", () => {
-      this.disableTimer();
-      this.scene.start("TransitionScene", { fromScene: this.scene.key, toScene: "MinigameHubScene" });
-    });
+    const compText = this.add
+      .text(0, 0, "COMPETENCIA", {
+        fontFamily: "Arial",
+        fontSize: "48px",
+        color: "#ffffff",
+        align: "center",
+      })
+      .setOrigin(0.5);
 
-    // Timer visible
-    this.timerText = this.add.text(width / 2, 100, this.formatTime(this.remainingTime), {
-      fontFamily: "Arial",
-      fontSize: "48px",
-      color: "#ffff00",
-    }).setOrigin(0.5);
+    const compHitbox = this.add
+      .image(0, 0, "btnTransparent")
+      .setDisplaySize(compWidth, compHeight)
+      .setInteractive({ cursor: "pointer" })
+      .on("pointerdown", () => this.startCompetition());
 
-    this.resetInactivityTimer();
+    compContainer.add([compBg, compText, compHitbox]);
 
-    // Reinicia el timer al interactuar
-    this.input.on('pointerdown', () => this.resetInactivityTimer());
-    this.input.keyboard.on('keydown', () => this.resetInactivityTimer());
-  }
+    // -----------------------------
+    // Crear botones de minijuegos
+    // -----------------------------
+    const margin = 80;
+    const spacing = (width - margin * 2) / this.minigames.length;
+    const buttonWidth = 200;
+    const buttonHeight = 250;
+    const yPos = height / 2;
 
-  createButton(x, y, w, h, label, cb) {
-    const bg = this.add.rectangle(x, y, w, h, 0xffffff, 0.12).setOrigin(0.5).setInteractive({ cursor: "pointer" });
-    const border = this.add.rectangle(x, y, w, h).setOrigin(0.5).setStrokeStyle(3, 0xffffff, 0.5);
-    const text = this.add.text(x, y, label, { fontFamily: "Arial", fontSize: "32px", color: "#ffffff" }).setOrigin(0.5);
+    this.minigames.forEach((mg, index) => {
+      const xPos = margin + spacing / 2 + index * spacing;
 
-    bg.on("pointerover", () => {
-      bg.setFillStyle(0xffffff, 0.25);
-      border.setStrokeStyle(3, 0xffff00, 0.8);
-      text.setScale(1.05);
-    });
-    bg.on("pointerout", () => {
-      bg.setFillStyle(0xffffff, 0.12);
-      border.setStrokeStyle(3, 0xffffff, 0.5);
-      text.setScale(1);
-    });
-    bg.on("pointerdown", cb);
+      const container = this.add.container(xPos, yPos);
 
-    return { bg, border, text };
-  }
+      // Imagen del minijuego (asignar manualmente)
+      const img = this.add
+        .image(0, 0, mg.img)
+        .setOrigin(0.5)
+        .setDisplaySize(buttonWidth, buttonHeight);
 
-  formatTime(seconds) {
-    const min = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
-    return `${min}:${sec}`;
-  }
+      // Fondo negro translúcido para el texto
+      const textBg = this.add
+        .rectangle(0, buttonHeight / 2 - 30, buttonWidth, 50, 0x000000, 0.5)
+        .setOrigin(0.5);
 
-  resetInactivityTimer() {
-    if (!this.timerText) return;
+      // Texto del nivel
+      const text = this.add
+        .text(0, buttonHeight / 2 - 30, mg.name, {
+          fontFamily: "Arial",
+          fontSize: "24px",
+          color: "#ffffff",
+          align: "center",
+          wordWrap: { width: buttonWidth - 20 },
+        })
+        .setOrigin(0.5);
 
-    if (this.inactivityTimer) this.inactivityTimer.remove(false);
-    this.remainingTime = this.inactivityDelay;
-    this.timerText.setText(this.formatTime(this.remainingTime));
+      // Hitbox para interactuar
+      const hitbox = this.add
+        .image(0, 0, "btnTransparent")
+        .setDisplaySize(buttonWidth, buttonHeight)
+        .setInteractive({ cursor: "pointer" })
+        .on("pointerdown", () => this.selectMinigame(mg.id));
 
-    this.inactivityTimer = this.time.addEvent({
-      delay: 1000,
-      loop: true,
-      callback: () => {
-        this.remainingTime--;
-        this.timerText.setText(this.formatTime(this.remainingTime));
-        if (this.remainingTime <= 0) {
-          this.inactivityTimer.remove(false);
-          this.scene.start("TransitionScene", {
-            fromScene: this.scene.key,
-            toScene: "IntroScene",
-          });
-        }
-      }
+      container.add([img, textBg, text, hitbox]);
     });
   }
 
-  disableTimer() {
-    if (this.inactivityTimer) this.inactivityTimer.remove(false);
-    if (this.timerText) {
-      this.timerText.destroy();
-      this.timerText = null;
+  /**
+   * Inicia el minijuego
+   * @param {boolean} isCompetition → true: iniciar del 1 al 5 / false: nivel individual
+   * @param {string} levelId → id del nivel (si isCompetition es false)
+   */
+  startMinigame(isCompetition, levelId = null) {
+    if (isCompetition) {
+      console.log("Iniciando competencia de 5 niveles en secuencia...");
+      this.scene.start("GameScene", {
+        competition: true,
+        startLevel: 1,
+        endLevel: 5,
+      });
+    } else {
+      console.log("Iniciando nivel individual:", levelId);
+      this.scene.start("GameScene", { competition: false, levelId });
     }
   }
 }

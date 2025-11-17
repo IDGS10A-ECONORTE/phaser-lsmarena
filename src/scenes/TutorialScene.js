@@ -20,7 +20,6 @@ export default class TutorialScene extends Phaser.Scene {
 
     // Cargar imágenes de personajes y señas desde tutorialDialogs
     tutorialDialogs.forEach((step) => {
-      // Cada step debe tener arrays de imágenes posibles
       step.characterImgs.forEach((img) =>
         this.load.image(img, `assets/personajes/Xochitl/${img}.png`)
       );
@@ -38,8 +37,7 @@ export default class TutorialScene extends Phaser.Scene {
     // ----------------------
     const introVideo = this.add
       .video(width / 2, height / 2, "tutorialIntro")
-      .setOrigin(0.5)
-      .setDisplaySize(width, height);
+      .setOrigin(0.5); // No escalar, mantener tamaño nativo
 
     // Reproducir el video HTML5 una sola vez
     introVideo.video.loop = false;
@@ -47,8 +45,8 @@ export default class TutorialScene extends Phaser.Scene {
 
     // Detectar fin del video usando el objeto HTMLVideoElement
     introVideo.video.onended = () => {
-      introVideo.destroy(); // eliminar el video de la escena
-      this.initTutorial(); // iniciar tutorial
+      introVideo.destroy();
+      this.initTutorial();
     };
 
     // Opción: permitir saltar el video con clic
@@ -71,7 +69,7 @@ export default class TutorialScene extends Phaser.Scene {
     // Contenedor principal
     this.tutorialContainer = this.add.container(0, 0);
 
-    // Inicializar primer paso aleatorio
+    // Inicializar primer paso
     this.showStep(this.currentStep);
 
     // Avanzar con clic
@@ -137,7 +135,7 @@ export default class TutorialScene extends Phaser.Scene {
       // Tutorial finalizado, usar TransitionScene
       this.scene.start("TransitionScene", {
         fromScene: this.scene.key,
-        toScene: "GameScene",
+        toScene: "MinigameHubScene",
       });
       return;
     }

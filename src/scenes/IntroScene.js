@@ -40,6 +40,7 @@ export default class IntroScene extends Phaser.Scene {
       this.currentVideo = null;
     }
 
+    // Solo centrar el video, sin escalar
     this.currentVideo = this.add
       .video(width / 2, height / 2, key)
       .setOrigin(0.5);
@@ -49,18 +50,13 @@ export default class IntroScene extends Phaser.Scene {
     videoElement.muted = true;
     videoElement.volume = 0;
 
-    const setFillCanvasSize = () => {
-      this.currentVideo.setDisplaySize(width, height);
-    };
-    videoElement.onloadedmetadata = setFillCanvasSize;
-    setFillCanvasSize();
+    // No escalar, solo reproducir
+    this.currentVideo.play(false);
 
     this.currentVideo.once("complete", () => {
       this.currentIndex++;
       this.playNextVideo();
     });
-
-    this.currentVideo.play(false);
   }
 
   skipVideo() {
