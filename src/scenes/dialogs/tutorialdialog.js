@@ -2,13 +2,13 @@ export const tutorialDialogs = [
   {
     dialogue: "Hola, soy Xochitl, vamos a practicar la LSM.",
     characterImgs: ["1", "2"], // varias posibles
-    signImgs: ["A", "B"], // varias posibles
-    transcription: "Hola",
+    signImgs: ["Z", "B"], // varias posibles
+    transcription: "Zeta",
   },
   {
     dialogue: "Esta es la seña para 'Amigo'.",
     characterImgs: ["3", "4"],
-    signImgs: ["C"],
-    transcription: "Amigo",
+    signImgs: ["Z"],
+    transcription: "Zeta",
   },
 ];

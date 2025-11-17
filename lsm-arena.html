@@ -1,1 +1,680 @@
-Gracias por jugar.
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LSM Arena - Domina el lenguaje, conquista la arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Rajdhani", sans-serif;
+        background: linear-gradient(to bottom, #0a0a0f, #1a0a2e, #16213e);
+        color: #e0e0e0;
+        overflow-x: hidden;
+      }
+
+      h1,
+      h2,
+      h3,
+      .logo {
+        font-family: "Orbitron", sans-serif;
+      }
+
+      /* Animaciones */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 40px rgba(6, 182, 212, 0.8),
+            0 0 60px rgba(6, 182, 212, 0.6);
+        }
+      }
+
+      @keyframes pulse-scale {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes slide-up {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      .animate-glow {
+        animation: glow 2s ease-in-out infinite;
+      }
+
+      .animate-pulse-scale {
+        animation: pulse-scale 2s ease-in-out infinite;
+      }
+
+      .slide-up {
+        animation: slide-up 0.6s ease-out forwards;
+      }
+
+      /* Gradientes personalizados */
+      .gradient-cyan-orange {
+        background: linear-gradient(135deg, #06b6d4 0%, #f97316 100%);
+      }
+
+      .gradient-dark {
+        background: linear-gradient(
+          to bottom,
+          rgba(10, 10, 15, 0.9),
+          rgba(26, 10, 46, 0.95)
+        );
+      }
+
+      /* Efectos de hover */
+      .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+      }
+
+      /* Grid de características */
+      .feature-card {
+        background: rgba(30, 30, 50, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .feature-card:hover {
+        border-color: rgba(6, 182, 212, 0.8);
+        background: rgba(30, 30, 50, 0.8);
+        transform: translateY(-5px);
+      }
+
+      /* Botones sociales */
+      .social-btn {
+        transition: all 0.3s ease;
+      }
+
+      .social-btn:hover {
+        transform: scale(1.1);
+      }
+
+      /* Particles background */
+      .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      .particle {
+        position: absolute;
+        background: rgba(6, 182, 212, 0.5);
+        border-radius: 50%;
+        animation: float-particle 10s infinite ease-in-out;
+      }
+
+      @keyframes float-particle {
+        0%,
+        100% {
+          transform: translate(0, 0);
+          opacity: 0.3;
+        }
+        50% {
+          transform: translate(100px, -100px);
+          opacity: 0.8;
+        }
+      }
+
+      /* Scroll reveal */
+      .reveal {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.6s ease;
+      }
+
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Particles Background -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Hero Section -->
+    <section
+      class="min-h-screen flex flex-col items-center justify-center px-4 py-20 relative"
+    >
+      <div class="text-center space-y-8 max-w-4xl">
+        <!-- Logo -->
+        <div class="logo text-6xl md:text-8xl font-black mb-8 animate-float">
+          <span
+            class="bg-gradient-to-r from-cyan-400 to-orange-500 bg-clip-text text-transparent"
+          >
+            LSM Arena
+          </span>
+        </div>
+
+        <!-- Tagline -->
+        <p
+          class="text-xl md:text-2xl text-cyan-300 font-light tracking-wide slide-up"
+          style="animation-delay: 0.2s"
+        >
+          Domina el lenguaje, conquista la arena
+        </p>
+
+        <!-- Play Button -->
+        <button
+          onclick="window.location.href='index.html'"
+          class="mt-12 px-16 py-6 text-2xl md:text-3xl font-bold text-white gradient-cyan-orange rounded-full hover-lift animate-glow transition-all duration-300"
+        >
+          JUGAR AHORA
+        </button>
+
+        <!-- Stats -->
+        <!-- <div
+          class="grid grid-cols-3 gap-4 md:gap-8 mt-16 slide-up"
+          style="animation-delay: 0.4s"
+        >
+          <div class="text-center">
+            <div class="text-3xl md:text-5xl font-bold text-cyan-400">
+              100K+
+            </div>
+            <div class="text-sm md:text-base text-gray-400">Jugadores</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl md:text-5xl font-bold text-orange-400">
+              50+
+            </div>
+            <div class="text-sm md:text-base text-gray-400">Niveles</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl md:text-5xl font-bold text-cyan-400">4.8★</div>
+            <div class="text-sm md:text-base text-gray-400">Valoración</div>
+          </div>
+        </div> -->
+      </div>
+    </section>
+
+    <!-- Visión -->
+    <section class="py-20 px-4 reveal">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <h2
+              class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-600 bg-clip-text text-transparent"
+            >
+              NUESTRA VISIÓN
+            </h2>
+            <p class="text-lg md:text-xl text-gray-300 leading-relaxed">
+              Nuestra misión es facilitar el aprendizaje y la interacción a
+              través de la Lengua de Señas Mexicana (LSM), desarrollando un
+              entorno accesible y lúdico que permita a personas sordas, oyentes
+              y estudiantes de LSM comunicarse, aprender y divertirse sin
+              barreras.
+            </p>
+            <p class="text-base md:text-lg text-gray-400 leading-relaxed">
+              Buscamos crear herramientas educativas y recreativas que promuevan
+              la inclusión, la igualdad de oportunidades y la sensibilización
+              sobre la diversidad auditiva en todos los niveles de aprendizaje.
+            </p>
+          </div>
+          <div
+            class="relative h-64 md:h-96 rounded-2xl overflow-hidden hover-lift"
+          >
+            <img
+              src="assets\escenas\5.png?height=400&width=600"
+              alt="Gaming World"
+              class="w-full h-full object-cover"
+            />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-cyan-900/50 to-transparent"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Misión -->
+    <section class="py-20 px-4 reveal">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div
+            class="relative h-64 md:h-96 rounded-2xl overflow-hidden hover-lift order-2 md:order-1"
+          >
+            <img
+              src="assets\escenas\7.png?height=400&width=600"
+              alt="Gaming Team"
+              class="w-full h-full object-cover"
+            />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-orange-900/50 to-transparent"
+            ></div>
+          </div>
+          <div class="space-y-6 order-1 md:order-2">
+            <h2
+              class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent"
+            >
+              NUESTRA MISIÓN
+            </h2>
+            <p class="text-lg md:text-xl text-gray-300 leading-relaxed">
+              Nuestra visión es convertir LSM Arena en una plataforma de
+              referencia que impulse la inclusión y la visibilidad de la
+              comunidad sorda en entornos digitales y educativos. Aspiramos a
+              que nuestro proyecto inspire a otros desarrolladores y educadores
+              a integrar la Lengua de Señas y la accesibilidad como elementos
+              fundamentales en videojuegos, aplicaciones educativas y espacios
+              de interacción digital, fomentando una sociedad más consciente,
+              diversa y equitativa.
+            </p>
+            <ul class="space-y-3 text-base md:text-lg text-gray-400">
+              <li class="flex items-start gap-3">
+                <span class="text-cyan-400 text-xl">✓</span>
+                <span>Reconocimiento de imagenes</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-cyan-400 text-xl">✓</span>
+                <span>Comunidad inclusiva y respetuosa</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-cyan-400 text-xl">✓</span>
+                <span>Soporte a desarrollo futuro</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Características -->
+    <section class="py-20 px-4 reveal">
+      <div class="max-w-6xl mx-auto">
+        <h2
+          class="text-4xl md:text-6xl font-bold text-center mb-16 bg-gradient-to-r from-cyan-400 to-orange-400 bg-clip-text text-transparent"
+        >
+          CARACTERÍSTICAS DEL JUEGO
+        </h2>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="feature-card p-6 rounded-2xl hover-lift">
+            <div class="text-5xl mb-4">🎮</div>
+            <h3 class="text-2xl font-bold mb-3 text-cyan-400">
+              Multijugador Épico
+            </h3>
+            <p class="text-gray-400">
+              El modo multijugador de LSM Arena permite a los jugadores competir
+              y colaborar en tiempo real usando la Lengua de Señas Mexicana
+              (LSM) como principal forma de comunicación y control.
+            </p>
+          </div>
+          <div class="feature-card p-6 rounded-2xl hover-lift">
+            <div class="text-5xl mb-4">🌍</div>
+            <h3 class="text-2xl font-bold mb-3 text-orange-400">
+              Modos de juego
+            </h3>
+            <p class="text-gray-400">
+              Diversión, aprendizaje y accesibilidad, ofreciendo una experiencia
+              multijugador que promueve la inclusión, la cooperación y la
+              sensibilización sobre la diversidad auditiva.
+            </p>
+          </div>
+          <div class="feature-card p-6 rounded-2xl hover-lift">
+            <div class="text-5xl mb-4">⚡</div>
+            <h3 class="text-2xl font-bold mb-3 text-cyan-400">
+              Aprendizaje Continuo
+            </h3>
+            <p class="text-gray-400">
+              Aprender y reforzar habilidades de LSM mientras interactúan de
+              manera dinámica y divertida.
+            </p>
+          </div>
+          <div class="feature-card p-6 rounded-2xl hover-lift">
+            <div class="text-5xl mb-4">🎯</div>
+            <h3 class="text-2xl font-bold mb-3 text-orange-400">
+              Inmersion total
+            </h3>
+            <p class="text-gray-400">
+              Participar en competencias inclusivas, donde oyentes y personas
+              sordas pueden jugar juntos en igualdad de condiciones.
+            </p>
+          </div>
+          <div class="feature-card p-6 rounded-2xl hover-lift">
+            <div class="text-5xl mb-4">🏆</div>
+            <h3 class="text-2xl font-bold mb-3 text-cyan-400">
+              Sistema de niveles
+            </h3>
+            <p class="text-gray-400">
+              Desafiarse entre sí en distintos niveles y minijuegos, fomentando
+              la práctica de señas.
+            </p>
+          </div>
+          <div class="feature-card p-6 rounded-2xl hover-lift">
+            <div class="text-5xl mb-4">🔄</div>
+            <h3 class="text-2xl font-bold mb-3 text-orange-400">
+              Actualizaciones Futuras
+            </h3>
+            <p class="text-gray-400">
+              Nuevo contenido, expansión del lenguaje y mejoras cada mes para
+              mantener la experiencia fresca.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Información del Proyecto -->
+    <section class="py-20 px-4 reveal">
+      <div class="max-w-6xl mx-auto">
+        <h2
+          class="text-4xl md:text-6xl font-bold text-center mb-16 bg-gradient-to-r from-orange-400 to-cyan-400 bg-clip-text text-transparent"
+        >
+          SOBRE EL PROYECTO
+        </h2>
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="feature-card p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-cyan-400">
+              Estado de Desarrollo
+            </h3>
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-300">Alpha</span>
+                  <span class="text-cyan-400">100%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    class="bg-cyan-400 h-2 rounded-full"
+                    style="width: 100%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-300">Beta</span>
+                  <span class="text-orange-400">60%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    class="bg-orange-400 h-2 rounded-full"
+                    style="width: 75%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-300">Lanzamiento</span>
+                  <span class="text-gray-400">20%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    class="bg-gray-400 h-2 rounded-full"
+                    style="width: 20%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-orange-400">Plataformas</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 text-gray-300">
+                <span class="text-2xl">💻</span>
+                <span>PC (Windows, Mac, Linux)</span>
+              </div>
+              <div class="flex items-center gap-3 text-gray-300">
+                <span class="text-2xl">📱</span>
+                <span>Próximamente en móviles</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-cyan-400">
+              Equipo de Desarrollo
+            </h3>
+            <div class="space-y-2 text-gray-300">
+              <p>
+                <strong class="text-cyan-300">Estudio:</strong> Cyber Games
+                ECONORTE
+              </p>
+              <p><strong class="text-cyan-300">Fundación:</strong> 2025</p>
+              <p>
+                <strong class="text-cyan-300">Ubicación:</strong> Santa
+                Catarina, Nuevo León
+              </p>
+              <p>
+                <strong class="text-cyan-300">Tamaño:</strong> 4 desarrolladores
+              </p>
+              <p><strong class="text-cyan-300">Motor:</strong> Phaser 3</p>
+            </div>
+          </div>
+
+          <div class="feature-card p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-orange-400">
+              Hitos del Proyecto
+            </h3>
+            <div class="space-y-3 text-gray-300">
+              <div class="flex gap-3">
+                <span class="text-cyan-400">✓</span>
+                <span>2024 - Planificación de idea</span>
+              </div>
+              <div class="flex gap-3">
+                <span class="text-cyan-400">✓</span>
+                <span>2024 - Desarrollo de juego</span>
+              </div>
+              <div class="flex gap-3">
+                <span class="text-cyan-400">✓</span>
+                <span>2025 - Alpha del juego (debug)</span>
+              </div>
+              <div class="flex gap-3">
+                <span class="text-orange-400">→</span>
+                <span>2025 - Beta pública</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Redes Sociales -->
+    <section class="py-20 px-4 reveal">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2
+          class="text-4xl md:text-6xl font-bold mb-8 bg-gradient-to-r from-cyan-400 to-orange-400 bg-clip-text text-transparent"
+        >
+          ÚNETE A LA COMUNIDAD
+        </h2>
+        <p class="text-xl text-gray-300 mb-12 leading-relaxed">
+          Sigue nuestras redes sociales para estar al día con las últimas
+          noticias, actualizaciones y contenido exclusivo.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-6 mb-12">
+          <a
+            href="#"
+            class="social-btn flex items-center gap-3 px-8 py-4 bg-cyan-600 hover:bg-cyan-500 rounded-full text-white font-semibold"
+          >
+            <span class="text-2xl">🐦</span>
+            <span>Twitter</span>
+          </a>
+          <a
+            href="#"
+            class="social-btn flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-500 rounded-full text-white font-semibold"
+          >
+            <span class="text-2xl">📺</span>
+            <span>YouTube</span>
+          </a>
+          <a
+            href="#"
+            class="social-btn flex items-center gap-3 px-8 py-4 bg-purple-600 hover:bg-purple-500 rounded-full text-white font-semibold"
+          >
+            <span class="text-2xl">🎮</span>
+            <span>Twitch</span>
+          </a>
+          <a
+            href="#"
+            class="social-btn flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-full text-white font-semibold"
+          >
+            <span class="text-2xl">💬</span>
+            <span>Discord</span>
+          </a>
+        </div>
+
+        <!-- Newsletter -->
+        <div class="feature-card p-8 rounded-2xl max-w-2xl mx-auto">
+          <h3 class="text-2xl font-bold mb-4 text-cyan-400">
+            Suscríbete al Newsletter
+          </h3>
+          <p class="text-gray-400 mb-6">
+            Recibe noticias exclusivas y acceso anticipado a betas
+          </p>
+          <div class="flex gap-3 flex-col sm:flex-row">
+            <input
+              type="email"
+              placeholder="tu@email.com"
+              class="flex-1 px-6 py-3 rounded-full bg-gray-800 border border-cyan-500/30 text-white focus:outline-none focus:border-cyan-500"
+            />
+            <button
+              class="px-8 py-3 gradient-cyan-orange rounded-full font-semibold text-white hover-lift"
+            >
+              Suscribirse
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-gray-800">
+      <div class="max-w-6xl mx-auto text-center space-y-4">
+        <div
+          class="logo text-3xl font-bold bg-gradient-to-r from-cyan-400 to-orange-500 bg-clip-text text-transparent"
+        >
+          CYBER QUEST
+        </div>
+        <p class="text-gray-400">© 2025 ECONORTE - LSM Arena.</p>
+        <div class="flex justify-center gap-6 text-sm text-gray-500">
+          <a href="#" class="hover:text-cyan-400 transition-colors"
+            >Política de Privacidad</a
+          >
+          <a href="#" class="hover:text-cyan-400 transition-colors"
+            >Términos de Servicio</a
+          >
+          <a href="#" class="hover:text-cyan-400 transition-colors">Soporte</a>
+          <a href="#" class="hover:text-cyan-400 transition-colors">Contacto</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Crear partículas de fondo
+      function createParticles() {
+        const particlesContainer = document.getElementById("particles");
+        const particleCount = 30;
+
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+
+          const size = Math.random() * 4 + 2;
+          particle.style.width = size + "px";
+          particle.style.height = size + "px";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.top = Math.random() * 100 + "%";
+          particle.style.animationDelay = Math.random() * 10 + "s";
+          particle.style.animationDuration = Math.random() * 10 + 10 + "s";
+
+          particlesContainer.appendChild(particle);
+        }
+      }
+
+      // Animación de scroll reveal
+      function revealOnScroll() {
+        const reveals = document.querySelectorAll(".reveal");
+
+        reveals.forEach((element) => {
+          const windowHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const revealPoint = 100;
+
+          if (elementTop < windowHeight - revealPoint) {
+            element.classList.add("active");
+          }
+        });
+      }
+
+      // Smooth scroll para los enlaces
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Inicializar
+      document.addEventListener("DOMContentLoaded", () => {
+        createParticles();
+        revealOnScroll();
+      });
+
+      window.addEventListener("scroll", revealOnScroll);
+
+      // Animación del botón de jugar
+      const playButton = document.querySelector("button");
+      if (playButton) {
+        playButton.addEventListener("click", () => {
+          alert("¡Redirigiendo al juego! 🎮");
+          // Aquí puedes agregar la URL de tu juego
+          // window.location.href = 'tu-url-del-juego';
+        });
+      }
+    </script>
+  </body>
+</html>
