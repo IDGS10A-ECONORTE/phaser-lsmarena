@@ -3,7 +3,6 @@ import SequenceManager from "/src/modules/SequenceManager.js";
 
 import {
   initWebcam,
-  setVideoPosition,
   stopWebcam,
   showWebcam,
   hideWebcam,
@@ -78,13 +77,27 @@ export default class TutorialScene extends Phaser.Scene {
 
   initPlayerWebcam() {
     initWebcam(320, 240).then((stream) => {
-      if (stream) {
-        this.videoElement = stream;
+      if (!stream) return;
 
-        const { width, height } = this.game.config;
-        setVideoPosition(width - 340, height - 260, 320, 240);
-        showWebcam();
-      }
+      this.videoElement = stream;
+
+      const camW = 320;
+      const camH = 240;
+      const margin = 24;
+
+      // primera posición
+      setVideoPositionResponsive(camW, camH, margin);
+      showWebcam();
+
+      // se adapta al redimensionar la ventana
+      window.addEventListener("resize", () => {
+        setVideoPositionResponsive(camW, camH, margin);
+      });
+
+      // se adapta al cambiar a fullscreen
+      document.addEventListener("fullscreenchange", () => {
+        setVideoPositionResponsive(camW, camH, margin);
+      });
     });
   }
 

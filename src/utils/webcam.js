@@ -22,6 +22,7 @@ export async function initWebcam(
     // Crear elemento <video> si no existe
     if (!videoElement) {
       videoElement = document.createElement("video");
+      videoElement.id = "player-webcam";
       videoElement.autoplay = true;
       videoElement.playsInline = true; // para iOS
       videoElement.muted = true; // silenciar el video
@@ -51,14 +52,20 @@ export function getWebcamStream() {
 }
 
 /**
- * Mueve y escala el video en pantalla
- * @param {number} x - posición X en px
- * @param {number} y - posición Y en px
+ * Mueve y escala el video en pantalla, anclado a la esquina inferior derecha (responsive)
  * @param {number} w - ancho
  * @param {number} h - alto
+ * @param {number} margin - margen desde el borde
  */
-export function setVideoPosition(x, y, w, h) {
+export function setVideoPositionResponsive(w = 320, h = 240, margin = 24) {
   if (!videoElement) return;
+
+  const windowW = window.innerWidth;
+  const windowH = window.innerHeight;
+
+  const x = windowW - w - margin;
+  const y = windowH - h - margin;
+
   videoElement.style.left = `${x}px`;
   videoElement.style.top = `${y}px`;
   videoElement.style.width = `${w}px`;
@@ -95,10 +102,11 @@ export function stopWebcam() {
 
   // Remover el elemento <video> si existe en DOM
   const videoEl = document.getElementById("player-webcam");
-  if (videoEl) {
-    videoEl.pause();
-    videoEl.srcObject = null;
-    videoEl.remove();
+  if (videoElement) {
+    videoElement.pause();
+    videoElement.srcObject = null;
+    videoElement.remove();
+    videoElement = null;
   }
 
   console.log("Webcam stopped");
