@@ -261,16 +261,19 @@ export default class CharacterSelectScene extends Phaser.Scene {
       return;
     }
 
-    // Deshabilitar timer al iniciar juego
+    // Guardamos selección en el registro global
+    this.registry.set("selectedCharacter", this.selectedCharacter);
+    this.registry.set("selectedDifficulty", this.selectedDifficulty);
+
+    // Detener timer
     if (this.inactivityTimer) this.inactivityTimer.remove(false);
     if (this.timerText) {
       this.timerText.destroy();
       this.timerText = null;
     }
-
-    this.scene.start("TutorialSelectScene", {
-      character: this.selectedCharacter,
-      difficulty: this.selectedDifficulty,
+    this.scene.start("TransitionScene", {
+      fromScene: this.scene.key,
+      toScene: "TutorialSelectScene",
     });
   }
 }

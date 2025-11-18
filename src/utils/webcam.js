@@ -88,11 +88,18 @@ export function showWebcam() {
  */
 export function stopWebcam() {
   if (videoStream) {
+    // Detener todos los tracks de video
     videoStream.getTracks().forEach((track) => track.stop());
     videoStream = null;
   }
-  if (videoElement) {
-    videoElement.remove();
-    videoElement = null;
+
+  // Remover el elemento <video> si existe en DOM
+  const videoEl = document.getElementById("player-webcam");
+  if (videoEl) {
+    videoEl.pause();
+    videoEl.srcObject = null;
+    videoEl.remove();
   }
+
+  console.log("Webcam stopped");
 }

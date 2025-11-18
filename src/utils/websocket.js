@@ -1,35 +1,50 @@
-let socket = null;
+let ws = null;
 
 export function initWebSocket(url = "ws://localhost:7777") {
-    return new Promise((resolve, reject) => {
+    ws = new WebSocket(url);
+
+    ws.onopen = () => {
+        console.log("WebSocket conectado a", url);
+    };
+
+    ws.onmessage = (event) => {
         try {
-            socket = new WebSocket(url);
-
-            socket.onopen = () => {
-                console.log("WebSocket connected:", url);
-                resolve(socket);
-            };
-
-            socket.onerror = (err) => {
-                console.error("WebSocket error:", err);
-                reject(err);
-            };
-
-        } catch (err) {
-            console.error("WebSocket initialization failed:", err);
-            reject(err);
+            const data = JSON.parse(event.data);
+            console.log("WS recibido:", data);
+            // Aquí podemos disparar eventos dentro de Phaser
+            // ej: 'sign_correct', 'sign_incorrect', 'feedback'
+        } catch (e) {
+            console.error("WS parse error:", e);
         }
-    });
+    };
+
+    ws.onclose = () => console.log("WebSocket cerrado");
+    ws.onerror = (err) => console.error("WebSocket error:", err);
 }
 
-export function sendWS(data) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(data));
-    } else {
-        console.warn("WebSocket not connected");
-    }
+export function sendImageToWS(canvas) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    // Obtener frame en base64 del canvas de la webcam
+    const imageBase64 = canvas.toDataURL("image/jpeg").split(",")[1];
+
+    ws.send(JSON.stringify({
+        type: "image",
+        image_data: imageBase64
+    }));
 }
 
-export function getSocket() {
-    return socket;
+export function setTargetSign(signName) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    ws.send(JSON.stringify({
+        type: "set_target",
+        sign: signName
+    }));
+}
+
+export function stopTarget() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    ws.send(JSON.stringify({ type: "stop_target" }));
 }
