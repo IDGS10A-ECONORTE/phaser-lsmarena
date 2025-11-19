@@ -50,13 +50,16 @@ export default class SequenceManager {
   // ===========================
   // Iniciar ejercicio
   // ===========================
-  start() {
+  async start() {
     if (this.timerEvent) this.timerEvent.remove(false);
 
     this.currentItem =
       this.sequence[Math.floor(Math.random() * this.sequence.length)];
 
     this.showSign(this.currentItem);
+
+    // Esperar a WS antes de enviar
+    await this.socket.waitForConnection();
 
     this.sendValidationRequest(this.currentItem.id);
 
@@ -66,22 +69,46 @@ export default class SequenceManager {
   showSign(item) {
     const { width, height } = this.scene.game.config;
 
+    // Elegir aleatoriamente si mostrar cuadrado o círculo
+    const useSquare = Math.random() > 0.5;
+
+    const textureKey = useSquare
+      ? `sign_${item.id}_square`
+      : `sign_${item.id}_circle`;
+
+    // Imagen de la seña
     if (!this.signImage) {
       this.signImage = this.scene.add
-        .image(width * 0.5, height * 0.5, item.overlaySquare)
+        .image(width * 0.5, height * 0.45, textureKey)
         .setOrigin(0.5)
         .setScale(0.85);
     } else {
-      this.signImage.setTexture(item.overlaySquare);
+      this.signImage.setTexture(textureKey);
     }
 
+    // TEXTO DE LA PALABRA
+    if (!this.signText) {
+      this.signText = this.scene.add
+        .text(width * 0.5, height * 0.75, item.word, {
+          fontFamily: "Arial",
+          fontSize: "42px",
+          color: "#ffff00",
+          align: "center",
+        })
+        .setOrigin(0.5);
+    } else {
+      this.signText.setText(item.word);
+    }
+
+    // CONTADOR
     if (!this.timerText) {
-      this.timerText = this.scene.add.text(width * 0.5, height * 0.75, "", {
-        fontFamily: "Arial",
-        fontSize: "48px",
-        color: "#ffffff",
-      });
-      this.timerText.setOrigin(0.5);
+      this.timerText = this.scene.add
+        .text(width * 0.5, height * 0.15, "", {
+          fontFamily: "Arial",
+          fontSize: "56px",
+          color: "#ffffff",
+        })
+        .setOrigin(0.5);
     }
   }
 

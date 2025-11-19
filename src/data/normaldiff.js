@@ -3,8 +3,8 @@ const normaldiff = [
         id: "hola",
         word: "HOLA",
         images: {
-            square: "assets/signos/template.png",
-            circle: "assets/signos2/template.png"
+            square: "assets/signos/A.png",
+            circle: "assets/signos2/A.png"
         },
         description: "Template.",
         difficulty: "normal"

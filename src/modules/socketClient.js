@@ -42,11 +42,38 @@ export default class SocketClient {
     };
   }
 
+  waitForConnection() {
+    return new Promise((resolve) => {
+      if (this.ws.readyState === WebSocket.OPEN) {
+        resolve();
+        return;
+      }
+
+      const checkInterval = setInterval(() => {
+        if (this.ws.readyState === WebSocket.OPEN) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 50);
+    });
+  }
+
+  send(data) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.warn("[WS] No se puede enviar, socket no abierto");
+      return;
+    }
+
+    this.ws.send(data);
+  }
+
   /** NUEVO ➜ Permite registrar mensajes brutos */
   onMessage(callback) {
+    const original = this.ws.onmessage;
+
     this.ws.onmessage = (msg) => {
       callback(msg.data);
-      this.handleMessage(msg.data);
+      if (original) original(msg);
     };
   }
 

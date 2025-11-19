@@ -6,7 +6,7 @@ import {
   stopWebcam,
   showWebcam,
   hideWebcam,
-  setVideoPositionResponsive
+  setVideoPositionResponsive,
 } from "/src/utils/webcam.js";
 
 export default class TutorialScene extends Phaser.Scene {
@@ -215,19 +215,25 @@ export default class TutorialScene extends Phaser.Scene {
 
   // 🔥 Donde inicia el SequenceManager
   startSequenceExercise() {
-    const { width, height } = this.game.config;
-
     // Ocultar diálogo
     this.tutorialContainer.setVisible(false);
 
-    // Crear SequenceManager (dificultad easy)
-    this.sequenceManager = new SequenceManager(
-      this,
-      "easy",
-      (result) => this.onSequenceResult(result) // callback
-    );
+    // IMPORTANTE: remover los eventos que pasan de diálogos
+    this.input.removeAllListeners();
+    const difficulty = this.registry.get("difficulty") || "easy";
+    // Crear SequenceManager
+    this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
+      this.handleSequenceResult(result);
+    });
 
     this.sequenceManager.start();
+  }
+
+  handleSequenceResult(result) {
+    console.log("[Sequence Result]", result);
+
+    // Reusar exactamente los FX visuales ya existentes
+    this.onSequenceResult(result.status);
   }
 
   // 🔥 Efectos visuales dependiendo del resultado

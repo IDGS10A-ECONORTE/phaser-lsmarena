@@ -5,6 +5,7 @@ import MainMenuScene from "./scenes/MainMenuScene.js";
 import CharacterSelectScene from "./scenes/CharacterSelectScene.js";
 import TutorialSelectScene from "./scenes/TutorialSelectScene.js";
 import TutorialScene from "./scenes/TutorialScene.js";
+import PreloadScene from "./scenes/PreloadScene.js";
 
 
 import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
@@ -30,6 +31,7 @@ const config = {
   backgroundColor: "#000000",
   pixelArt: false,
   scene: [
+    PreloadScene,
     IntroScene,
     MainMenuScene,
     TransitionScene,
