@@ -12,6 +12,10 @@ export default class SocketClient {
     this.shouldReconnect = true;
 
     this.connect();
+    // Log de todos los mensajes RAW entrantes
+    this.onMessage((raw) => {
+      console.log("[WS][RAW MESSAGE]:", raw);
+    });
   }
 
   connect() {
@@ -72,7 +76,7 @@ export default class SocketClient {
     const original = this.ws.onmessage;
 
     this.ws.onmessage = (msg) => {
-      callback(msg.data);
+      callback(msg.data); // <-- LOG RAW
       if (original) original(msg);
     };
   }
@@ -80,26 +84,33 @@ export default class SocketClient {
   handleMessage(data) {
     try {
       const parsed = JSON.parse(data);
+      console.log("[WS][PARSED]:", parsed);
 
       if (parsed.type === "validation_result") {
         this.onValidationResult(parsed);
       }
     } catch (e) {
-      console.error("[WS] Error al parsear mensaje:", e);
+      console.error("[WS] Error al parsear mensaje:", e, " RAW:", data);
     }
   }
 
   sendFrameForValidation(signID, base64Image) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+  if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-    const packet = {
-      type: "validate_sign",
-      sign: signID,
-      image: base64Image,
-    };
+  const packet = {
+    type: "validate_sign",
+    sign: signID,
+    image: base64Image,
+  };
 
-    this.ws.send(JSON.stringify(packet));
-  }
+  console.log("[WS][SEND VALIDATION]:", {
+    signID,
+    imageLength: base64Image.length,
+  });
+
+  this.ws.send(JSON.stringify(packet));
+}
+
 
   disconnect() {
     this.shouldReconnect = false;
