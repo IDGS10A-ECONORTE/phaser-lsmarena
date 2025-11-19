@@ -30,6 +30,8 @@ export async function initWebcam(
       videoElement.style.zIndex = 1000;
       videoElement.style.border = "3px solid #ffff00";
       videoElement.style.borderRadius = "8px";
+      videoElement.style.zIndex = 999999;
+
       parent.appendChild(videoElement);
     }
 

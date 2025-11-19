@@ -6,6 +6,7 @@ import {
   stopWebcam,
   showWebcam,
   hideWebcam,
+  setVideoPositionResponsive
 } from "/src/utils/webcam.js";
 
 export default class TutorialScene extends Phaser.Scene {
@@ -41,9 +42,9 @@ export default class TutorialScene extends Phaser.Scene {
     });
 
     // Feedback visual
-    this.load.image("successFx", "assets/OK.png");
-    this.load.image("failFx", "assets/OKNT.png");
-    this.load.image("timeoutFx", "assets/TIME.png");
+    this.load.image("successFx", "assets/iconos/OK.png");
+    this.load.image("failFx", "assets/iconos/OKNT.png");
+    this.load.image("timeoutFx", "assets/iconos/TIME.png");
   }
 
   create() {
