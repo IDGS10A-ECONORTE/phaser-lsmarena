@@ -15,7 +15,7 @@ export default class Minigame5Scene extends Phaser.Scene {
     this.optionSprites = [];
     this.currentTarget = null;
     this.roundsCompleted = 0;
-    this.maxRounds = 6;
+    this.maxRounds = 10;
   }
 
   preload() {

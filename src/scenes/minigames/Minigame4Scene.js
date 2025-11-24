@@ -12,7 +12,7 @@ export default class Minigame4Scene extends Phaser.Scene {
     this.sequenceManager = null;
     this.videoElement = null;
     this.completedSpellingRounds = 0;
-    this.maxSpellingRounds = 4;
+    this.maxSpellingRounds = 10;
     this.wordDisplay = null;
     this.wordDisplayTween = null;
   }
@@ -43,7 +43,7 @@ export default class Minigame4Scene extends Phaser.Scene {
     this.sequenceManager.setExternalSignDisplay(true);
 
     this.completedSpellingRounds = 0;
-    this.maxMemoryRounds = 4;
+    this.maxMemoryRounds = 10;
     this.createMemoryCardDisplay();
 
     // Contador regresivo 3, 2, 1 antes de iniciar
