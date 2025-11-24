@@ -13,6 +13,15 @@ export default class SocketClient {
 
     // Callbacks para mensajes personalizados
     this.messageCallbacks = [];
+    
+    // Callback para resultados de validación (inicializado como null)
+    this._validationCallback = null;
+    
+    // Si hay un handler de validación en los handlers, registrarlo inmediatamente
+    if (handlers.onValidationResult && typeof handlers.onValidationResult === 'function') {
+      this._validationCallback = handlers.onValidationResult;
+      console.log("[WS] Callback de validación registrado desde handlers");
+    }
 
     this.connect();
   }
@@ -22,6 +31,7 @@ export default class SocketClient {
 
     this.ws.onopen = () => {
       console.log("[WS] Conectado al servidor");
+      console.log("[WS] Callback de validación disponible:", !!this._validationCallback);
       this.onConnected();
     };
 
@@ -31,6 +41,7 @@ export default class SocketClient {
 
       if (this.shouldReconnect) {
         console.log("[WS] Reintentando conexión…");
+        // El callback se mantiene porque es propiedad de la instancia
         setTimeout(() => this.connect(), this.reconnectDelay);
       }
     };
@@ -94,8 +105,18 @@ export default class SocketClient {
       const parsed = JSON.parse(data);
       console.log("[WS][PARSED]:", parsed);
 
-      // VALIDATION RESULT
-      if (parsed.type === "validation_result") {
+      // RESPUESTA DE VALIDACIÓN DEL SERVIDOR (formato: result, feedback, target, score)
+      if (parsed.hasOwnProperty("result") && parsed.hasOwnProperty("score")) {
+        console.log("[WS] Callback registrado:", !!this._validationCallback);
+        if (this._validationCallback) {
+          console.log("[WS] Llamando callback de validación");
+          this._validationCallback(parsed);
+        } else {
+          console.warn("[WS] No hay callback de validación registrado");
+        }
+      }
+      // VALIDATION RESULT (formato alternativo)
+      else if (parsed.type === "validation_result") {
         if (this._validationCallback) {
           this._validationCallback(parsed);
         }
@@ -174,7 +195,10 @@ export default class SocketClient {
    */
   onValidationResult(callback) {
     if (typeof callback === "function") {
+      console.log("[WS] Registrando callback de validación");
       this._validationCallback = callback;
+    } else {
+      console.warn("[WS] Intento de registrar callback no válido:", typeof callback);
     }
   }
 

@@ -2,6 +2,7 @@
 //  SequenceManager.js – versión con lógica de score por dificultad
 // =============================================================
 import SocketClient from "/src/modules/socketClient.js";
+import { captureWebcamFrame } from "/src/utils/webcam.js";
 
 import easy from "/src/data/easydiff.js";
 import medium from "/src/data/normaldiff.js";
@@ -13,22 +14,42 @@ export default class SequenceManager {
     this.difficulty = difficulty;
     this.onResult = onResult;
 
+    // Crear el socket y registrar el callback ANTES de que se conecte
+    // Usar handlers para registrar el callback inmediatamente
     this.socket = new SocketClient("ws://localhost:7777", {
-      onConnected: () => console.log("WS listo"),
-      onValidationResult: (data) => this.handleValidation(data),
+      onConnected: () => {
+        console.log("[SequenceManager] WS listo");
+      },
+      // Registrar el callback desde los handlers para que esté disponible desde el inicio
+      onValidationResult: (data) => {
+        console.log("[SequenceManager] Callback de validación recibido (desde handlers)");
+        this.handleValidationResult(data);
+      },
     });
+
+    // También registrar con el método explícito por si acaso
+    this.socket.onValidationResult((data) => {
+      console.log("[SequenceManager] Callback de validación recibido (método explícito)");
+      this.handleValidationResult(data);
+    });
+    
+    console.log("[SequenceManager] Callback registrado después de constructor:", !!this.socket._validationCallback);
 
     // Timer según dificultad
     this.timerLimit =
       difficulty === "hard" ? 6 : difficulty === "medium" ? 8 : 10;
 
-    // Score mínimo según dificultad
+    // Score mínimo según dificultad (en porcentaje: easy=91, medium=93, hard=95)
     this.scoreThreshold =
-      difficulty === "hard" ? 0.80 : difficulty === "medium" ? 0.70 : 0.60;
+      difficulty === "hard" ? 95 : difficulty === "medium" ? 93 : 91;
 
     this.currentItem = null;
     this.isWaitingResponse = false;
     this.timerEvent = null;
+    this.frameInterval = null; // Intervalo para enviar frames cada 400ms
+    
+    // Mejor score recibido durante el intento (para evaluar al final si no se alcanzó el threshold)
+    this.bestScore = 0;
 
     this.signImage = null;
     this.signText = null;
@@ -54,18 +75,44 @@ export default class SequenceManager {
 
   // =============================================================
   async start() {
+    // Limpiar eventos anteriores
     if (this.timerEvent) this.timerEvent.remove(false);
+    if (this.frameInterval) {
+      clearInterval(this.frameInterval);
+      this.frameInterval = null;
+    }
+
+    // Resetear el mejor score
+    this.bestScore = 0;
+
+    // Asegurar que el callback esté registrado antes de empezar
+    if (!this.socket._validationCallback) {
+      console.warn("[SequenceManager] Callback no registrado, registrándolo ahora");
+      this.socket.onValidationResult((data) => {
+        console.log("[SequenceManager] Callback de validación recibido (registrado en start)");
+        this.handleValidationResult(data);
+      });
+    }
 
     this.currentItem =
       this.sequence[Math.floor(Math.random() * this.sequence.length)];
 
     this.showSign(this.currentItem);
 
+    // Esperar conexión WebSocket
     await this.socket.waitForConnection();
 
-    this.sendValidationRequest(this.currentItem.id);
+    // Verificar que el callback sigue registrado después de la conexión
+    console.log("[SequenceManager] Callback registrado después de conexión:", !!this.socket._validationCallback);
 
+    // Establecer la seña objetivo en el servidor
+    this.socket.setTargetSign(this.currentItem.id);
+
+    // Iniciar el timer
     this.startTimer();
+
+    // Iniciar el envío de frames cada 400ms
+    this.startFrameCapture();
   }
 
   // =============================================================
@@ -111,63 +158,142 @@ export default class SequenceManager {
   }
 
   // =============================================================
-  sendValidationRequest(expectedId) {
-  if (!this.socket) {
-    console.error("Socket no inicializado");
-    return;
+  // Inicia el envío de frames cada 400ms
+  startFrameCapture() {
+    this.isWaitingResponse = true;
+
+    // Enviar el primer frame inmediatamente
+    this.sendFrame();
+
+    // Continuar enviando frames cada 400ms
+    this.frameInterval = setInterval(() => {
+      if (this.isWaitingResponse) {
+        this.sendFrame();
+      } else {
+        // Si ya no estamos esperando respuesta, detener el envío
+        if (this.frameInterval) {
+          clearInterval(this.frameInterval);
+          this.frameInterval = null;
+        }
+      }
+    }, 400);
   }
 
-  this.isWaitingResponse = true;
-
-  console.log("[SequenceManager] SET TARGET:", expectedId);
-
-  // 1) Primero decirle al servidor cuál es la seña objetivo
-  this.socket.setTargetSign(expectedId);
-
-  // 2) Luego mandar el comando de validación
-  const payload = {
-    type: "validate_sign",
-    expected: expectedId,
-  };
-
-  console.log("[SequenceManager] SEND VALIDATION:", payload);
-
-  this.socket.send(JSON.stringify(payload));
-}
-
-
   // =============================================================
-  handleSocketMessage(msg) {
-    let data;
+  // Captura y envía un frame de la webcam al servidor
+  sendFrame() {
+    if (!this.socket || !this.isWaitingResponse) return;
 
-    try {
-      data = JSON.parse(msg);
-    } catch (err) {
-      console.error("Mensaje inválido WS:", msg);
+    // Obtener el elemento de video
+    const videoElement = document.getElementById("player-webcam");
+    if (!videoElement || videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) {
+      console.warn("[SequenceManager] Video no listo para capturar");
       return;
     }
 
-    if (data.type !== "validation_result") return;
-    if (!this.isWaitingResponse) return;
+    // Crear un canvas temporal para capturar el frame
+    const canvas = document.createElement("canvas");
+    canvas.width = videoElement.videoWidth || 640;
+    canvas.height = videoElement.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-    this.isWaitingResponse = false;
+    // Enviar imagen al servidor (el servidor espera type: "image" con image_data)
+    this.socket.sendImageToWS(canvas);
+  }
 
-    const result = this.evaluateResult(data);
 
-    this.finishSequence(result);
+  // =============================================================
+  // Maneja los mensajes RAW del WebSocket (para logging)
+  handleSocketMessage(msg) {
+    // Solo para logging, el procesamiento real está en handleValidationResult
+    try {
+      const data = JSON.parse(msg);
+      if (data.hasOwnProperty("result") && data.hasOwnProperty("score")) {
+        console.log("[SequenceManager] Respuesta del servidor:", data);
+      }
+    } catch (err) {
+      // Ignorar errores de parsing aquí
+    }
+  }
+
+  // =============================================================
+  // Maneja los resultados de validación del servidor
+  handleValidationResult(data) {
+    console.log("[SequenceManager] handleValidationResult llamado:", data);
+    console.log("[SequenceManager] isWaitingResponse:", this.isWaitingResponse);
+
+    if (!this.isWaitingResponse) {
+      console.log("[SequenceManager] Ignorando respuesta, ya no estamos esperando");
+      return;
+    }
+
+    // El servidor responde con: { result, feedback, target, score }
+    // score es un porcentaje (0-100)
+    const score = data.score || 0;
+
+    console.log(
+      `[SequenceManager] SCORE=${score}, threshold=${this.scoreThreshold}, comparación: ${score >= this.scoreThreshold ? "OK" : "NO OK"}`
+    );
+
+    // IMPORTANTE: Ignorar respuestas con score = 0 (mano no detectada)
+    // Solo procesar cuando hay un score válido >= threshold
+    if (score === 0) {
+      console.log("[SequenceManager] Ignorando respuesta con score=0 (mano no detectada), continuando...");
+      return; // Continuar esperando más respuestas
+    }
+
+    // Guardar el mejor score recibido (para evaluar al final si no se alcanza el threshold)
+    if (score > this.bestScore) {
+      this.bestScore = score;
+      console.log(`[SequenceManager] Nuevo mejor score: ${this.bestScore}`);
+    }
+
+    // Solo procesar si el score es >= threshold (éxito) - terminar inmediatamente
+    if (score >= this.scoreThreshold) {
+      console.log("[SequenceManager] ✅ Score válido detectado, procesando resultado");
+      
+      // Evaluar el resultado
+      const result = this.evaluateResult(data);
+
+      console.log("[SequenceManager] Resultado evaluado:", result);
+
+      // Detener el envío de frames y el timer
+      this.isWaitingResponse = false;
+      if (this.frameInterval) {
+        clearInterval(this.frameInterval);
+        this.frameInterval = null;
+      }
+      if (this.timerEvent) {
+        this.timerEvent.remove(false);
+        this.timerEvent = null;
+      }
+
+      this.finishSequence(result);
+      return;
+    }
+
+    // Si el score es > 0 pero < threshold, seguimos intentando
+    // Al final del tiempo, evaluaremos el bestScore para decidir OKNT o TIMEOUT
+    if (score > 0 && score < this.scoreThreshold) {
+      console.log(`[SequenceManager] Score insuficiente (${score} < ${this.scoreThreshold}), continuando intentos...`);
+      // No terminamos, seguimos esperando más respuestas o timeout
+      return;
+    }
   }
 
   // =============================================================
   // AQUI SE DECIDE OK / OKNT / TIME
   // =============================================================
   evaluateResult(data) {
+    // El servidor envía score como porcentaje (0-100)
     const score = data.score || 0;
 
-    console.log(
-      `[SequenceManager] SCORE=${score}, threshold=${this.scoreThreshold}`
-    );
+    console.log(`[SequenceManager] Evaluando: score=${score}, threshold=${this.scoreThreshold}`);
 
+    // OK: score >= threshold (easy=85, medium=90, hard=94)
     if (score >= this.scoreThreshold) {
+      console.log("[SequenceManager] ✅ RESULTADO: OK");
       return {
         status: "ok",
         score,
@@ -175,8 +301,9 @@ export default class SequenceManager {
       };
     }
 
-    // score insuficiente pero hubo gesto
+    // OKNT: score > 0 pero < threshold (gesto detectado pero insuficiente)
     if (score > 0 && score < this.scoreThreshold) {
+      console.log("[SequenceManager] ⚠️ RESULTADO: OKNT");
       return {
         status: "oknt",
         score,
@@ -184,7 +311,8 @@ export default class SequenceManager {
       };
     }
 
-    // no hubo gesto o falla total
+    // TIMEOUT: score = 0 (no se detectó gesto o falla total)
+    console.log("[SequenceManager] ❌ RESULTADO: TIMEOUT");
     return {
       status: "timeout",
       score: 0,
@@ -206,13 +334,35 @@ export default class SequenceManager {
         this.timerText.setText(timeLeft);
 
         if (timeLeft <= 0 && this.isWaitingResponse) {
+          console.log("[SequenceManager] ⏰ Tiempo agotado, finalizando secuencia");
+          console.log(`[SequenceManager] Mejor score recibido: ${this.bestScore}`);
+          
+          // Detener el envío de frames
           this.isWaitingResponse = false;
+          if (this.frameInterval) {
+            clearInterval(this.frameInterval);
+            this.frameInterval = null;
+          }
 
-          const result = {
-            status: "timeout",
-            score: 0,
-            expected: this.currentItem.id,
-          };
+          // Al finalizar por timeout, evaluar el mejor score recibido
+          let result;
+          if (this.bestScore > 0 && this.bestScore < this.scoreThreshold) {
+            // Hubo intentos pero no se alcanzó el threshold → OKNT
+            result = {
+              status: "oknt",
+              score: this.bestScore,
+              expected: this.currentItem.id,
+            };
+            console.log("[SequenceManager] ⚠️ Resultado final: OKNT (score insuficiente)");
+          } else {
+            // No hubo intentos válidos o score = 0 → TIMEOUT
+            result = {
+              status: "timeout",
+              score: 0,
+              expected: this.currentItem.id,
+            };
+            console.log("[SequenceManager] ❌ Resultado final: TIMEOUT (sin gestos válidos)");
+          }
 
           this.finishSequence(result);
         }
@@ -222,10 +372,36 @@ export default class SequenceManager {
 
   // =============================================================
   finishSequence(result) {
-    if (this.timerEvent) this.timerEvent.remove(false);
+    // Limpiar eventos
+    if (this.timerEvent) {
+      this.timerEvent.remove(false);
+      this.timerEvent = null;
+    }
+    if (this.frameInterval) {
+      clearInterval(this.frameInterval);
+      this.frameInterval = null;
+    }
+
+    // Detener el objetivo en el servidor
+    this.socket.stopTarget();
 
     console.log("[SequenceManager] RESULT:", result);
 
     this.onResult(result);
+  }
+
+  // =============================================================
+  // Limpiar recursos al destruir el SequenceManager
+  destroy() {
+    if (this.frameInterval) {
+      clearInterval(this.frameInterval);
+      this.frameInterval = null;
+    }
+    if (this.timerEvent) {
+      this.timerEvent.remove(false);
+      this.timerEvent = null;
+    }
+    this.socket.stopTarget();
+    this.socket.disconnect();
   }
 }

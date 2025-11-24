@@ -55,6 +55,42 @@ export function getWebcamStream() {
 }
 
 /**
+ * Devuelve el elemento de video de la webcam
+ * @returns {HTMLVideoElement|null}
+ */
+export function getWebcamElement() {
+  return videoElement;
+}
+
+/**
+ * Captura un frame del video de la webcam y lo convierte a base64
+ * @returns {string|null} - Imagen en base64 (sin el prefijo data:image/jpeg;base64,)
+ */
+export function captureWebcamFrame() {
+  if (!videoElement || videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) {
+    return null;
+  }
+
+  try {
+    // Crear un canvas temporal para capturar el frame
+    const canvas = document.createElement("canvas");
+    canvas.width = videoElement.videoWidth || 640;
+    canvas.height = videoElement.videoHeight || 480;
+
+    const ctx = canvas.getContext("2d");
+    // Dibujar el frame del video en el canvas
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Convertir a base64 y remover el prefijo
+    const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+    return base64;
+  } catch (err) {
+    console.error("Error capturando frame de webcam:", err);
+    return null;
+  }
+}
+
+/**
  * Mueve y escala el video en pantalla, anclado a la esquina inferior derecha (responsive)
  * @param {number} w - ancho
  * @param {number} h - alto
