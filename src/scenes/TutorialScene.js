@@ -131,76 +131,90 @@ export default class TutorialScene extends Phaser.Scene {
       step.signImgs[Math.floor(Math.random() * step.signImgs.length)];
 
     const { width, height } = this.game.config;
+    const characterX = width * 0.18;
+    const characterY = height * 0.6;
+    const dialogWidth = width * 0.38;
+    const dialogHeight = height * 0.28;
+    const dialogX = width * 0.42;
+    const dialogY = height * 0.62;
+    const wrapWidth = dialogWidth - 80;
+    const rightX = width * 0.74;
 
     if (!this.characterSprite) {
       // Personaje
       this.characterSprite = this.add
-        .sprite(100, height / 2, charImg)
-        .setOrigin(0, 0.5)
-        .setScale(0.8);
+        .sprite(characterX, characterY, charImg)
+        .setOrigin(0.5, 0.5)
+        .setScale(Math.min(width, height) / 1400);
 
       this.tutorialContainer.add(this.characterSprite);
 
       // Fondo y texto de diálogo
-      const dialogY =
-        this.characterSprite.y + this.characterSprite.displayHeight / 2 - 20;
-
       this.dialogueBg = this.add
-        .rectangle(
-          this.characterSprite.x + this.characterSprite.displayWidth / 2,
-          dialogY,
-          400,
-          100,
-          0x000000,
-          0.6
-        )
-        .setOrigin(0.5);
+        .rectangle(dialogX, dialogY, dialogWidth, dialogHeight, 0x000000, 0.65)
+        .setOrigin(0.5)
+        .setStrokeStyle(2, 0xffff88, 0.4);
 
       this.dialogueText = this.add
-        .text(this.dialogueBg.x, this.dialogueBg.y, step.dialogue, {
-          fontFamily: "Arial",
-          fontSize: "28px",
+        .text(dialogX, dialogY, step.dialogue, {
+          fontFamily: "Montserrat",
+          fontSize: "30px",
           color: "#ffffff",
-          wordWrap: { width: 360 },
-          align: "center",
+          lineSpacing: 6,
+          align: "left",
+          wordWrap: { width: wrapWidth },
         })
         .setOrigin(0.5);
 
       this.tutorialContainer.add([this.dialogueBg, this.dialogueText]);
 
       // Seña
-      const rightX = width * 0.65;
-
       this.signImg = this.add
-        .image(rightX, height / 2 - 50, signImg)
-        .setOrigin(0.5);
+        .image(rightX, height * 0.45, signImg)
+        .setOrigin(0.5)
+        .setScale(Math.min(width, height) / 1300);
 
       this.transcriptionText = this.add
         .text(
           rightX,
-          this.signImg.y + this.signImg.displayHeight / 2 + 20,
+          this.signImg.y + this.signImg.displayHeight / 2 + 30,
           step.transcription,
           {
-            fontFamily: "Arial",
-            fontSize: "28px",
+            fontFamily: "Montserrat",
+            fontSize: "30px",
             color: "#ffff00",
             align: "center",
+            wordWrap: { width: width * 0.22 },
           }
         )
         .setOrigin(0.5, 0);
 
       this.tutorialContainer.add([this.signImg, this.transcriptionText]);
     } else {
-      this.characterSprite.setTexture(charImg);
+      this.characterSprite
+        .setTexture(charImg)
+        .setPosition(characterX, characterY)
+        .setScale(Math.min(width, height) / 1400);
 
-      const dialogY =
-        this.characterSprite.y + this.characterSprite.displayHeight / 2 - 20;
+      this.dialogueBg
+        .setPosition(dialogX, dialogY)
+        .setSize(dialogWidth, dialogHeight);
 
-      this.dialogueBg.setY(dialogY);
-      this.dialogueText.setText(step.dialogue).setY(dialogY);
+      this.dialogueText
+        .setText(step.dialogue)
+        .setPosition(dialogX, dialogY)
+        .setFontFamily("Montserrat")
+        .setFontSize(30)
+        .setWordWrapWidth(wrapWidth);
 
-      this.signImg.setTexture(signImg);
-      this.transcriptionText.setText(step.transcription);
+      this.signImg
+        .setTexture(signImg)
+        .setPosition(rightX, height * 0.45)
+        .setScale(Math.min(width, height) / 1300);
+
+      this.transcriptionText
+        .setText(step.transcription)
+        .setPosition(rightX, this.signImg.y + this.signImg.displayHeight / 2 + 30);
     }
   }
 
@@ -351,8 +365,8 @@ export default class TutorialScene extends Phaser.Scene {
         overlay.destroy();
         dialogContainer.destroy();
       })
-      .on("pointerover", () => yesBg.setTint(0x00ff00))
-      .on("pointerout", () => yesBg.clearTint());
+      .on("pointerover", () => yesBg.setFillStyle(0x00ff00, 0.9))
+      .on("pointerout", () => yesBg.setFillStyle(0x00aa00, 0.8));
 
     const yesText = this.add
       .text(-150, 60, "SÍ", {
@@ -374,8 +388,8 @@ export default class TutorialScene extends Phaser.Scene {
         overlay.destroy();
         dialogContainer.destroy();
       })
-      .on("pointerover", () => noBg.setTint(0xff0000))
-      .on("pointerout", () => noBg.clearTint());
+      .on("pointerover", () => noBg.setFillStyle(0xff4444, 0.9))
+      .on("pointerout", () => noBg.setFillStyle(0xaa0000, 0.8));
 
     const noText = this.add
       .text(150, 60, "NO", {

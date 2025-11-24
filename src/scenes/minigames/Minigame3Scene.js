@@ -11,9 +11,13 @@ export default class Minigame3Scene extends Phaser.Scene {
     super("Minigame3Scene");
     this.sequenceManager = null;
     this.videoElement = null;
+    this.fireSprites = [];
+    this.firesExtinguished = 0;
   }
 
   preload() {
+    this.load.image("minigame3Bg", "assets/104.png");
+    this.load.image("minigame3Fire", "assets/iconos/51.png");
     this.load.image("successFx", "assets/iconos/OK.png");
     this.load.image("failFx", "assets/iconos/OKNT.png");
     this.load.image("timeoutFx", "assets/iconos/TIME.png");
@@ -22,6 +26,12 @@ export default class Minigame3Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.game.config;
 
+    this.add
+      .image(0, 0, "minigame3Bg")
+      .setOrigin(0)
+      .setDisplaySize(width, height)
+      .setDepth(-10);
+
     this.initPlayerWebcam();
 
     const difficulty = this.registry.get("selectedDifficulty") || "easy";
@@ -29,6 +39,8 @@ export default class Minigame3Scene extends Phaser.Scene {
     this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
       this.handleSequenceResult(result);
     });
+
+    this.createFireSprites();
 
     // Contador regresivo 3, 2, 1 antes de iniciar
     this.startCountdown(() => {
@@ -49,7 +61,8 @@ export default class Minigame3Scene extends Phaser.Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(5);
 
     // Animación de entrada
     this.tweens.add({
@@ -153,7 +166,8 @@ export default class Minigame3Scene extends Phaser.Scene {
     const fx = this.add
       .image(width / 2, height / 2, fxKey)
       .setScale(0.8)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(8);
 
     this.tweens.add({
       targets: fx,
@@ -163,6 +177,10 @@ export default class Minigame3Scene extends Phaser.Scene {
       hold: 400,
       onComplete: () => fx.destroy(),
     });
+
+    if (result === "ok") {
+      this.extinguishFire();
+    }
   }
 
   finishMinigame() {
@@ -209,6 +227,58 @@ export default class Minigame3Scene extends Phaser.Scene {
     if (this.sequenceManager) {
       this.sequenceManager.destroy();
     }
+  }
+
+  createFireSprites() {
+    const { width, height } = this.game.config;
+    this.fireSprites = [];
+
+    const columns = 4;
+    const rows = 2;
+
+    for (let col = 0; col < columns; col++) {
+      for (let row = 0; row < rows; row++) {
+        const sprite = this.add
+          .image(
+            (width * (col + 1)) / (columns + 1),
+            height * 0.4 + row * 150,
+            "minigame3Fire"
+          )
+          .setScale(Phaser.Math.FloatBetween(0.8, 1.4))
+          .setDepth(-9)
+          .setAlpha(0.9);
+
+        this.fireSprites.push(sprite);
+      }
+    }
+
+    this.firesExtinguished = 0;
+  }
+
+  extinguishFire() {
+    const remaining = this.fireSprites.filter((sprite) => sprite.alpha > 0.1);
+    if (remaining.length === 0) {
+      this.createFireSprites();
+      return;
+    }
+
+    const sprite =
+      remaining[Phaser.Math.Between(0, remaining.length - 1)];
+
+    this.tweens.add({
+      targets: sprite,
+      alpha: 0.1,
+      scale: sprite.scale * 0.5,
+      duration: 600,
+      ease: "Cubic.easeOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: sprite,
+          alpha: 0,
+          duration: 400,
+        });
+      },
+    });
   }
 }
 

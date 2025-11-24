@@ -11,9 +11,14 @@ export default class Minigame4Scene extends Phaser.Scene {
     super("Minigame4Scene");
     this.sequenceManager = null;
     this.videoElement = null;
+    this.completedSpellingRounds = 0;
+    this.maxSpellingRounds = 4;
+    this.wordDisplay = null;
+    this.wordDisplayTween = null;
   }
 
   preload() {
+    this.load.image("minigame4Bg", "assets/110.png");
     this.load.image("successFx", "assets/iconos/OK.png");
     this.load.image("failFx", "assets/iconos/OKNT.png");
     this.load.image("timeoutFx", "assets/iconos/TIME.png");
@@ -22,24 +27,45 @@ export default class Minigame4Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.game.config;
 
+    this.add
+      .image(0, 0, "minigame4Bg")
+      .setOrigin(0)
+      .setDisplaySize(width, height)
+      .setDepth(-10);
+
     this.initPlayerWebcam();
 
     const difficulty = this.registry.get("selectedDifficulty") || "easy";
 
-    this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
-      this.handleSequenceResult(result);
-    });
+    this.sequenceManager = new SequenceManager(this, difficulty, (result) =>
+      this.handleSequenceResult(result)
+    );
+    this.sequenceManager.setExternalSignDisplay(true);
+
+    this.completedSpellingRounds = 0;
+    this.maxMemoryRounds = 4;
+    this.createMemoryCardDisplay();
 
     // Contador regresivo 3, 2, 1 antes de iniciar
     this.startCountdown(() => {
-      // Modo deletreo para nivel 4
-      this.sequenceManager.start(true);
+      this.startMemoryRound();
     });
   }
 
   startCountdown(onComplete) {
     const { width, height } = this.game.config;
     let count = 3;
+
+    const instructionText = this.add
+      .text(width / 2, height / 2 + 140, "Memoriza la seña y repítela cuando desaparezca", {
+        fontFamily: "Arial",
+        fontSize: "32px",
+        color: "#ffffff",
+        align: "center",
+        wordWrap: { width: width * 0.8 },
+      })
+      .setOrigin(0.5)
+      .setDepth(5);
 
     const countdownText = this.add
       .text(width / 2, height / 2, count.toString(), {
@@ -49,7 +75,8 @@ export default class Minigame4Scene extends Phaser.Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(5);
 
     // Animación de entrada
     this.tweens.add({
@@ -85,6 +112,7 @@ export default class Minigame4Scene extends Phaser.Scene {
             duration: 300,
             onComplete: () => {
               countdownText.destroy();
+              instructionText.destroy();
               onComplete();
             },
           });
@@ -112,9 +140,7 @@ export default class Minigame4Scene extends Phaser.Scene {
   }
 
   handleSequenceResult(result) {
-    // En modo deletreo, solo contar cuando se completa toda la palabra
-    if (this.sequenceManager.spellingMode && result.spellingCompleted) {
-      // Palabra completada en modo deletreo
+    if (this.isMemoryMode) {
       const stats = this.registry.get("gameStats") || {
         correct: 0,
         incorrect: 0,
@@ -135,13 +161,14 @@ export default class Minigame4Scene extends Phaser.Scene {
       // Mostrar FX visual
       this.showResultFX(result.status);
 
+      this.completedSpellingRounds++;
+
       // Continuar o terminar
       this.time.delayedCall(1000, () => {
-        if (stats.total >= 10) {
+        if (this.completedSpellingRounds >= this.maxMemoryRounds) {
           this.finishMinigame();
         } else {
-          // Reiniciar con nueva palabra
-          this.sequenceManager.start(true);
+          this.startMemoryRound();
         }
       });
       return;
@@ -191,7 +218,8 @@ export default class Minigame4Scene extends Phaser.Scene {
     const fx = this.add
       .image(width / 2, height / 2, fxKey)
       .setScale(0.8)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(8);
 
     this.tweens.add({
       targets: fx,
@@ -246,6 +274,72 @@ export default class Minigame4Scene extends Phaser.Scene {
     stopWebcam();
     if (this.sequenceManager) {
       this.sequenceManager.destroy();
+    }
+  }
+
+  createMemoryCardDisplay() {
+    const { width, height } = this.game.config;
+    this.cardTitle = this.add
+      .text(width / 2, height * 0.18, "", {
+        fontFamily: "Arial",
+        fontSize: "64px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(6)
+      .setAlpha(0);
+    this.cardImage = this.add
+      .image(width / 2, height * 0.48, "successFx")
+      .setDepth(6)
+      .setAlpha(0);
+    this.cardImageTween = null;
+    this.isMemoryMode = true;
+  }
+
+  startMemoryRound() {
+    const dataset = this.sequenceManager.sequence || [];
+    if (!dataset.length) return;
+
+    this.currentMemoryItem =
+      dataset[Math.floor(Math.random() * dataset.length)];
+
+    this.showMemoryCard(this.currentMemoryItem);
+
+    this.time.delayedCall(1000, () => {
+      this.hideMemoryCard();
+      this.sequenceManager.start(false, this.currentMemoryItem);
+    });
+  }
+
+  showMemoryCard(item) {
+    const textureKey = `sign_${item.id}_square`;
+    if (this.cardTitle) {
+      this.cardTitle.setText(item.word || item.id).setAlpha(1);
+    }
+
+    if (this.cardImage) {
+      this.cardImage.setTexture(textureKey);
+      this.cardImage.setAlpha(1).setScale(0.9);
+    }
+  }
+
+  hideMemoryCard() {
+    if (this.cardTitle) {
+      this.tweens.add({
+        targets: this.cardTitle,
+        alpha: 0,
+        duration: 200,
+      });
+    }
+    if (this.cardImage) {
+      this.tweens.add({
+        targets: this.cardImage,
+        alpha: 0,
+        duration: 200,
+      });
     }
   }
 }

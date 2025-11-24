@@ -11,9 +11,15 @@ export default class Minigame5Scene extends Phaser.Scene {
     super("Minigame5Scene");
     this.sequenceManager = null;
     this.videoElement = null;
+    this.targetWordText = null;
+    this.optionSprites = [];
+    this.currentTarget = null;
+    this.roundsCompleted = 0;
+    this.maxRounds = 6;
   }
 
   preload() {
+    this.load.image("minigame5Bg", "assets/108.png");
     this.load.image("successFx", "assets/iconos/OK.png");
     this.load.image("failFx", "assets/iconos/OKNT.png");
     this.load.image("timeoutFx", "assets/iconos/TIME.png");
@@ -22,18 +28,26 @@ export default class Minigame5Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.game.config;
 
+    this.add
+      .image(0, 0, "minigame5Bg")
+      .setOrigin(0)
+      .setDisplaySize(width, height)
+      .setDepth(-10);
+
     this.initPlayerWebcam();
 
     const difficulty = this.registry.get("selectedDifficulty") || "easy";
 
-    this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
-      this.handleSequenceResult(result);
-    });
+    this.sequenceManager = new SequenceManager(this, difficulty, (result) =>
+      this.handleSequenceResult(result)
+    );
+    this.sequenceManager.setExternalSignDisplay(true);
+
+    this.createSignOptionsUI();
 
     // Contador regresivo 3, 2, 1 antes de iniciar
     this.startCountdown(() => {
-      // Modo normal para nivel 5
-      this.sequenceManager.start(false);
+      this.startSignRound();
     });
   }
 
@@ -49,7 +63,8 @@ export default class Minigame5Scene extends Phaser.Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(5);
 
     // Animación de entrada
     this.tweens.add({
@@ -129,13 +144,15 @@ export default class Minigame5Scene extends Phaser.Scene {
     stats.accuracy = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
     this.registry.set("gameStats", stats);
 
+    this.roundsCompleted++;
+
     this.showResultFX(result.status);
 
     this.time.delayedCall(1000, () => {
-      if (stats.total >= 10) {
+      if (this.roundsCompleted >= this.maxRounds) {
         this.finishMinigame();
       } else {
-        this.sequenceManager.start();
+        this.startSignRound();
       }
     });
   }
@@ -153,7 +170,8 @@ export default class Minigame5Scene extends Phaser.Scene {
     const fx = this.add
       .image(width / 2, height / 2, fxKey)
       .setScale(0.8)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(8);
 
     this.tweens.add({
       targets: fx,
@@ -199,6 +217,61 @@ export default class Minigame5Scene extends Phaser.Scene {
     if (this.sequenceManager) {
       this.sequenceManager.destroy();
     }
+  }
+
+  createSignOptionsUI() {
+    const { width, height } = this.game.config;
+
+    this.targetWordText = this.add
+      .text(width / 2, height * 0.18, "Replicando...", {
+        fontFamily: "Arial",
+        fontSize: "64px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 5,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(6);
+
+    const positions = [width * 0.25, width * 0.5, width * 0.75];
+
+    this.optionSprites = positions.map((xPos) =>
+      this.add
+        .image(xPos, height * 0.5, "successFx")
+        .setScale(0.8)
+        .setDepth(5)
+    );
+  }
+
+  startSignRound() {
+    const dataset = this.sequenceManager.sequence || [];
+    if (!dataset.length) return;
+
+    const target =
+      dataset[Math.floor(Math.random() * dataset.length)];
+    this.currentTarget = target;
+
+    const decoys = Phaser.Utils.Array.Shuffle(
+      dataset.filter((item) => item.id !== target.id)
+    ).slice(0, 2);
+
+    const options = Phaser.Utils.Array.Shuffle([target, ...decoys]);
+
+    if (this.targetWordText) {
+      this.targetWordText.setText(`Replica: ${target.word || target.id}`);
+    }
+
+    options.forEach((option, idx) => {
+      const sprite = this.optionSprites[idx];
+      if (!sprite) return;
+      sprite.setTexture(`sign_${option.id}_square`);
+      sprite.setScale(0.85);
+      sprite.setAlpha(0.95);
+      sprite.clearTint();
+    });
+
+    this.sequenceManager.start(false, target);
   }
 }
 

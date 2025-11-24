@@ -11,9 +11,12 @@ export default class Minigame1Scene extends Phaser.Scene {
     super("Minigame1Scene");
     this.sequenceManager = null;
     this.videoElement = null;
+    this.completedSpellingRounds = 0;
+    this.maxSpellingRounds = 4;
   }
 
   preload() {
+    this.load.image("minigame1Bg", "assets/105.png");
     // Feedback visual (mismos que TutorialScene)
     this.load.image("successFx", "assets/iconos/OK.png");
     this.load.image("failFx", "assets/iconos/OKNT.png");
@@ -23,8 +26,12 @@ export default class Minigame1Scene extends Phaser.Scene {
   create() {
     const { width, height } = this.game.config;
 
-    // Fondo (ajustar según assets disponibles)
-    // this.add.image(0, 0, "minigame1Bg").setOrigin(0).setDisplaySize(width, height);
+    // Fondo
+    this.add
+      .image(0, 0, "minigame1Bg")
+      .setOrigin(0)
+      .setDisplaySize(width, height)
+      .setDepth(-10);
 
     // Inicializar webcam
     this.initPlayerWebcam();
@@ -33,9 +40,18 @@ export default class Minigame1Scene extends Phaser.Scene {
     const difficulty = this.registry.get("selectedDifficulty") || "easy";
 
     // Crear SequenceManager
-    this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
-      this.handleSequenceResult(result);
-    });
+    this.sequenceManager = new SequenceManager(
+      this,
+      difficulty,
+      (result) => {
+        this.handleSequenceResult(result);
+      },
+      (word) => this.updateSpellingWordDisplay(word)
+    );
+
+    this.createSpellingWordDisplay();
+
+    this.completedSpellingRounds = 0;
 
     // Contador regresivo 3, 2, 1 antes de iniciar
     this.startCountdown(() => {
@@ -56,7 +72,8 @@ export default class Minigame1Scene extends Phaser.Scene {
         align: "center",
       })
       .setOrigin(0.5)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(5);
 
     // Animación de entrada
     this.tweens.add({
@@ -147,9 +164,11 @@ export default class Minigame1Scene extends Phaser.Scene {
       // Mostrar FX visual
       this.showResultFX(result.status);
 
+       this.completedSpellingRounds++;
+
       // Continuar o terminar
       this.time.delayedCall(1000, () => {
-        if (stats.total >= 10) {
+        if (this.completedSpellingRounds >= this.maxSpellingRounds) {
           this.finishMinigame();
         } else {
           // Reiniciar con nueva palabra
@@ -208,7 +227,8 @@ export default class Minigame1Scene extends Phaser.Scene {
     const fx = this.add
       .image(width / 2, height / 2, fxKey)
       .setScale(0.8)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(8);
 
     this.tweens.add({
       targets: fx,
@@ -268,6 +288,49 @@ export default class Minigame1Scene extends Phaser.Scene {
     stopWebcam();
     if (this.sequenceManager) {
       this.sequenceManager.destroy();
+    }
+  }
+
+  createSpellingWordDisplay() {
+    const { width, height } = this.game.config;
+    this.wordDisplay = this.add
+      .text(width / 2, height * 0.15, "", {
+        fontFamily: "Arial",
+        fontSize: "72px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(6)
+      .setAlpha(0);
+    this.wordDisplayTween = null;
+  }
+
+  updateSpellingWordDisplay(word) {
+    if (!this.wordDisplay) return;
+
+    if (this.wordDisplayTween) {
+      this.wordDisplayTween.stop();
+      this.wordDisplayTween = null;
+    }
+
+    if (word) {
+      this.wordDisplay
+        .setText(`DELETREA: ${word}`.toUpperCase())
+        .setAlpha(1)
+        .setScale(1);
+
+      this.wordDisplayTween = this.tweens.add({
+        targets: this.wordDisplay,
+        alpha: 0,
+        delay: 1500,
+        duration: 400,
+        ease: "Quad.easeOut",
+      });
+    } else {
+      this.wordDisplay.setAlpha(0);
     }
   }
 }

@@ -10,10 +10,17 @@ import hard from "/src/data/harddiff.js";
 import words from "/src/data/words.js";
 
 export default class SequenceManager {
-  constructor(scene, difficulty = "easy", onResult = () => {}) {
+  constructor(
+    scene,
+    difficulty = "easy",
+    onResult = () => {},
+    spellingWordCallback = null
+  ) {
     this.scene = scene;
     this.difficulty = difficulty;
     this.onResult = onResult;
+    this.spellingWordCallback =
+      typeof spellingWordCallback === "function" ? spellingWordCallback : null;
     
     // Modo deletreo
     this.spellingMode = false;
@@ -61,9 +68,10 @@ export default class SequenceManager {
     this.signImage = null;
     this.signText = null;
     this.timerText = null;
-    this.wordText = null; // Para modo deletreo
-    this.spellingHintText = null; // Para modo deletreo
-    this.currentLetterText = null; // Para modo deletreo
+    this.wordText = null; // Para modo deletreo (interno)
+    this.spellingHintText = null; // Para modo deletreo (interno)
+    this.currentLetterText = null; // Para modo deletreo (interno)
+    this.useExternalSignDisplay = false;
 
     this.sequence = this.selectDataset();
 
@@ -84,7 +92,7 @@ export default class SequenceManager {
   }
 
   // =============================================================
-  async start(spellingMode = false) {
+  async start(spellingMode = false, forcedItem = null) {
     // Limpiar eventos anteriores
     if (this.timerEvent) this.timerEvent.remove(false);
     if (this.frameInterval) {
@@ -111,8 +119,9 @@ export default class SequenceManager {
       // Modo deletreo: seleccionar palabra y preparar secuencia de letras
       await this.startSpelling();
     } else {
-      // Modo normal: seleccionar item aleatorio
+      // Modo normal: seleccionar item (forzado o aleatorio)
       this.currentItem =
+        forcedItem ||
         this.sequence[Math.floor(Math.random() * this.sequence.length)];
 
       this.showSign(this.currentItem);
@@ -172,7 +181,11 @@ export default class SequenceManager {
     }
 
     // Mostrar la palabra completa primero
-    this.showWord(this.currentWord);
+    if (this.spellingWordCallback || this.useExternalSignDisplay) {
+      this.spellingWordCallback(this.currentWord);
+    } else {
+      this.showWord(this.currentWord);
+    }
 
     // Esperar conexión WebSocket
     await this.socket.waitForConnection();
@@ -190,6 +203,11 @@ export default class SequenceManager {
     const { width, height } = this.scene.game.config;
 
     // Mostrar la palabra completa
+    if (this.spellingWordCallback || this.useExternalSignDisplay) {
+      // UI manejada externamente
+      return;
+    }
+
     if (!this.wordText) {
       this.wordText = this.scene.add
         .text(width / 2, height * 0.3, word, {
@@ -243,18 +261,27 @@ export default class SequenceManager {
     this.showSign(this.currentItem);
 
     // Mostrar indicador de letra actual
-    if (!this.currentLetterText) {
-      const { width, height } = this.scene.game.config;
-      this.currentLetterText = this.scene.add
-        .text(width / 2, height * 0.5, `Letra ${this.currentLetterIndex + 1} de ${this.lettersSequence.length}`, {
-          fontFamily: "Arial",
-          fontSize: "28px",
-          color: "#00ff00",
-          align: "center",
-        })
-        .setOrigin(0.5);
-    } else {
-      this.currentLetterText.setText(`Letra ${this.currentLetterIndex + 1} de ${this.lettersSequence.length}`);
+    if (!this.spellingWordCallback) {
+      if (!this.currentLetterText) {
+        const { width, height } = this.scene.game.config;
+        this.currentLetterText = this.scene.add
+          .text(
+            width / 2,
+            height * 0.5,
+            `Letra ${this.currentLetterIndex + 1} de ${this.lettersSequence.length}`,
+            {
+              fontFamily: "Arial",
+              fontSize: "28px",
+              color: "#00ff00",
+              align: "center",
+            }
+          )
+          .setOrigin(0.5);
+      } else {
+        this.currentLetterText.setText(
+          `Letra ${this.currentLetterIndex + 1} de ${this.lettersSequence.length}`
+        );
+      }
     }
 
     // Establecer la seña objetivo en el servidor
@@ -291,12 +318,28 @@ export default class SequenceManager {
       spellingCompleted: true,
     };
 
+    if (this.spellingWordCallback) {
+      this.spellingWordCallback(null);
+    }
+
     console.log("[SequenceManager] Deletreo finalizado:", result);
     this.onResult(result);
   }
 
   // =============================================================
   showSign(item) {
+    if (this.useExternalSignDisplay) {
+      if (this.signImage) {
+        this.signImage.destroy();
+        this.signImage = null;
+      }
+      if (this.signText) {
+        this.signText.destroy();
+        this.signText = null;
+      }
+      return;
+    }
+
     const { width, height } = this.scene.game.config;
 
     const useSquare = Math.random() > 0.5;
@@ -306,32 +349,43 @@ export default class SequenceManager {
 
     if (!this.signImage) {
       this.signImage = this.scene.add
-        .image(width / 2, height * 0.45, textureKey)
+        .image(width / 2, height * 0.42, textureKey)
         .setOrigin(0.5)
         .setScale(0.85);
     } else {
-      this.signImage.setTexture(textureKey);
+      this.signImage
+        .setTexture(textureKey)
+        .setPosition(width / 2, height * 0.42);
     }
 
     if (!this.signText) {
       this.signText = this.scene.add
-        .text(width / 2, height * 0.75, item.word, {
-          fontFamily: "Arial",
-          fontSize: "42px",
-          color: "#ffff00",
+        .text(width / 2, height * 0.62, item.word, {
+          fontFamily: "Montserrat",
+          fontSize: "52px",
+          color: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 6,
           align: "center",
         })
         .setOrigin(0.5);
     } else {
-      this.signText.setText(item.word);
+      this.signText
+        .setText(item.word)
+        .setFontFamily("Montserrat")
+        .setFontSize(52)
+        .setStroke("#000000", 6)
+        .setY(height * 0.62);
     }
 
     if (!this.timerText) {
       this.timerText = this.scene.add
         .text(width / 2, height * 0.15, "", {
-          fontFamily: "Arial",
+          fontFamily: "Montserrat",
           fontSize: "56px",
           color: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 4,
         })
         .setOrigin(0.5);
     }
@@ -511,6 +565,20 @@ export default class SequenceManager {
   startTimer() {
     let timeLeft = this.timerLimit;
 
+    if (!this.timerText) {
+      const { width, height } = this.scene.game.config;
+      this.timerText = this.scene.add
+        .text(width / 2, height * 0.15, "", {
+          fontFamily: "Montserrat",
+          fontSize: "56px",
+          color: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 4,
+          align: "center",
+        })
+        .setOrigin(0.5);
+    }
+
     this.timerText.setText(timeLeft);
 
     this.timerEvent = this.scene.time.addEvent({
@@ -584,6 +652,22 @@ export default class SequenceManager {
     console.log("[SequenceManager] RESULT:", result);
 
     this.onResult(result);
+  }
+
+  // =============================================================
+  // Configura si una escena externa muestra la seña actual
+  setExternalSignDisplay(flag = true) {
+    this.useExternalSignDisplay = flag;
+    if (flag) {
+      if (this.signImage) {
+        this.signImage.destroy();
+        this.signImage = null;
+      }
+      if (this.signText) {
+        this.signText.destroy();
+        this.signText = null;
+      }
+    }
   }
 
   // =============================================================
