@@ -7,12 +7,19 @@ import { captureWebcamFrame } from "/src/utils/webcam.js";
 import easy from "/src/data/easydiff.js";
 import medium from "/src/data/normaldiff.js";
 import hard from "/src/data/harddiff.js";
+import words from "/src/data/words.js";
 
 export default class SequenceManager {
   constructor(scene, difficulty = "easy", onResult = () => {}) {
     this.scene = scene;
     this.difficulty = difficulty;
     this.onResult = onResult;
+    
+    // Modo deletreo
+    this.spellingMode = false;
+    this.currentWord = null;
+    this.currentLetterIndex = 0;
+    this.lettersSequence = [];
 
     // Crear el socket y registrar el callback ANTES de que se conecte
     // Usar handlers para registrar el callback inmediatamente
@@ -54,6 +61,9 @@ export default class SequenceManager {
     this.signImage = null;
     this.signText = null;
     this.timerText = null;
+    this.wordText = null; // Para modo deletreo
+    this.spellingHintText = null; // Para modo deletreo
+    this.currentLetterText = null; // Para modo deletreo
 
     this.sequence = this.selectDataset();
 
@@ -74,7 +84,7 @@ export default class SequenceManager {
   }
 
   // =============================================================
-  async start() {
+  async start(spellingMode = false) {
     // Limpiar eventos anteriores
     if (this.timerEvent) this.timerEvent.remove(false);
     if (this.frameInterval) {
@@ -85,6 +95,9 @@ export default class SequenceManager {
     // Resetear el mejor score
     this.bestScore = 0;
 
+    // Configurar modo deletreo
+    this.spellingMode = spellingMode;
+
     // Asegurar que el callback esté registrado antes de empezar
     if (!this.socket._validationCallback) {
       console.warn("[SequenceManager] Callback no registrado, registrándolo ahora");
@@ -94,16 +107,155 @@ export default class SequenceManager {
       });
     }
 
-    this.currentItem =
-      this.sequence[Math.floor(Math.random() * this.sequence.length)];
+    if (spellingMode) {
+      // Modo deletreo: seleccionar palabra y preparar secuencia de letras
+      await this.startSpelling();
+    } else {
+      // Modo normal: seleccionar item aleatorio
+      this.currentItem =
+        this.sequence[Math.floor(Math.random() * this.sequence.length)];
 
-    this.showSign(this.currentItem);
+      this.showSign(this.currentItem);
+
+      // Esperar conexión WebSocket
+      await this.socket.waitForConnection();
+
+      // Verificar que el callback sigue registrado después de la conexión
+      console.log("[SequenceManager] Callback registrado después de conexión:", !!this.socket._validationCallback);
+
+      // Establecer la seña objetivo en el servidor
+      this.socket.setTargetSign(this.currentItem.id);
+
+      // Iniciar el timer
+      this.startTimer();
+
+      // Iniciar el envío de frames cada 400ms
+      this.startFrameCapture();
+    }
+  }
+
+  // =============================================================
+  // Inicia el modo deletreo
+  async startSpelling() {
+    // Seleccionar palabra aleatoria
+    this.currentWord = words[Math.floor(Math.random() * words.length)];
+    console.log(`[SequenceManager] Palabra seleccionada para deletrear: ${this.currentWord}`);
+
+    // Convertir palabra en secuencia de letras usando el dataset easy
+    this.lettersSequence = [];
+    for (let i = 0; i < this.currentWord.length; i++) {
+      const letter = this.currentWord[i].toUpperCase();
+      // Buscar la letra en el dataset easy (puede ser número o letra)
+      const letterItem = easy.find(item => {
+        const itemId = item.id.toLowerCase();
+        const itemWord = item.word.toUpperCase();
+        return itemId === letter.toLowerCase() || itemWord === letter || itemWord.includes(letter);
+      });
+      if (letterItem) {
+        this.lettersSequence.push(letterItem);
+      } else {
+        console.warn(`[SequenceManager] Letra "${letter}" no encontrada en el dataset`);
+      }
+    }
+
+    if (this.lettersSequence.length === 0) {
+      console.error("[SequenceManager] No se encontraron letras para deletrear");
+      // Fallback: usar modo normal
+      this.spellingMode = false;
+      this.currentItem = this.sequence[Math.floor(Math.random() * this.sequence.length)];
+      this.showSign(this.currentItem);
+      await this.socket.waitForConnection();
+      this.socket.setTargetSign(this.currentItem.id);
+      this.startTimer();
+      this.startFrameCapture();
+      return;
+    }
+
+    // Mostrar la palabra completa primero
+    this.showWord(this.currentWord);
 
     // Esperar conexión WebSocket
     await this.socket.waitForConnection();
+    
+    // Iniciar deletreo después de 2 segundos
+    this.scene.time.delayedCall(2000, () => {
+      this.currentLetterIndex = 0;
+      this.startNextLetter();
+    });
+  }
 
-    // Verificar que el callback sigue registrado después de la conexión
-    console.log("[SequenceManager] Callback registrado después de conexión:", !!this.socket._validationCallback);
+  // =============================================================
+  // Muestra la palabra completa
+  showWord(word) {
+    const { width, height } = this.scene.game.config;
+
+    // Mostrar la palabra completa
+    if (!this.wordText) {
+      this.wordText = this.scene.add
+        .text(width / 2, height * 0.3, word, {
+          fontFamily: "Arial",
+          fontSize: "64px",
+          color: "#ffff00",
+          align: "center",
+        })
+        .setOrigin(0.5);
+    } else {
+      this.wordText.setText(word);
+    }
+
+    // Texto indicador
+    if (!this.spellingHintText) {
+      this.spellingHintText = this.scene.add
+        .text(width / 2, height * 0.4, "Deletrea la palabra", {
+          fontFamily: "Arial",
+          fontSize: "32px",
+          color: "#ffffff",
+          align: "center",
+        })
+        .setOrigin(0.5);
+    }
+  }
+
+  // =============================================================
+  // Inicia la siguiente letra del deletreo
+  async startNextLetter() {
+    if (this.currentLetterIndex >= this.lettersSequence.length) {
+      // Deletreo completado
+      console.log("[SequenceManager] Deletreo completado");
+      this.finishSpelling();
+      return;
+    }
+
+    // Limpiar eventos anteriores
+    if (this.timerEvent) this.timerEvent.remove(false);
+    if (this.frameInterval) {
+      clearInterval(this.frameInterval);
+      this.frameInterval = null;
+    }
+
+    // Resetear el mejor score para esta letra
+    this.bestScore = 0;
+
+    // Obtener la letra actual
+    this.currentItem = this.lettersSequence[this.currentLetterIndex];
+    
+    // Mostrar la letra actual
+    this.showSign(this.currentItem);
+
+    // Mostrar indicador de letra actual
+    if (!this.currentLetterText) {
+      const { width, height } = this.scene.game.config;
+      this.currentLetterText = this.scene.add
+        .text(width / 2, height * 0.5, `Letra ${this.currentLetterIndex + 1} de ${this.lettersSequence.length}`, {
+          fontFamily: "Arial",
+          fontSize: "28px",
+          color: "#00ff00",
+          align: "center",
+        })
+        .setOrigin(0.5);
+    } else {
+      this.currentLetterText.setText(`Letra ${this.currentLetterIndex + 1} de ${this.lettersSequence.length}`);
+    }
 
     // Establecer la seña objetivo en el servidor
     this.socket.setTargetSign(this.currentItem.id);
@@ -113,6 +265,34 @@ export default class SequenceManager {
 
     // Iniciar el envío de frames cada 400ms
     this.startFrameCapture();
+  }
+
+  // =============================================================
+  // Finaliza el deletreo
+  finishSpelling() {
+    // Limpiar eventos
+    if (this.timerEvent) {
+      this.timerEvent.remove(false);
+      this.timerEvent = null;
+    }
+    if (this.frameInterval) {
+      clearInterval(this.frameInterval);
+      this.frameInterval = null;
+    }
+
+    // Detener el objetivo en el servidor
+    this.socket.stopTarget();
+
+    // Resultado del deletreo (por ahora siempre éxito si se completó)
+    const result = {
+      status: "ok",
+      score: 100,
+      expected: this.currentWord,
+      spellingCompleted: true,
+    };
+
+    console.log("[SequenceManager] Deletreo finalizado:", result);
+    this.onResult(result);
   }
 
   // =============================================================
@@ -253,11 +433,6 @@ export default class SequenceManager {
     if (score >= this.scoreThreshold) {
       console.log("[SequenceManager] ✅ Score válido detectado, procesando resultado");
       
-      // Evaluar el resultado
-      const result = this.evaluateResult(data);
-
-      console.log("[SequenceManager] Resultado evaluado:", result);
-
       // Detener el envío de frames y el timer
       this.isWaitingResponse = false;
       if (this.frameInterval) {
@@ -269,6 +444,18 @@ export default class SequenceManager {
         this.timerEvent = null;
       }
 
+      // Si está en modo deletreo, pasar a la siguiente letra
+      if (this.spellingMode) {
+        this.currentLetterIndex++;
+        this.scene.time.delayedCall(500, () => {
+          this.startNextLetter();
+        });
+        return;
+      }
+
+      // Modo normal: evaluar y terminar
+      const result = this.evaluateResult(data);
+      console.log("[SequenceManager] Resultado evaluado:", result);
       this.finishSequence(result);
       return;
     }
@@ -344,7 +531,16 @@ export default class SequenceManager {
             this.frameInterval = null;
           }
 
-          // Al finalizar por timeout, evaluar el mejor score recibido
+          // Si está en modo deletreo, pasar a la siguiente letra aunque haya timeout
+          if (this.spellingMode) {
+            this.currentLetterIndex++;
+            this.scene.time.delayedCall(500, () => {
+              this.startNextLetter();
+            });
+            return;
+          }
+
+          // Modo normal: evaluar el mejor score recibido
           let result;
           if (this.bestScore > 0 && this.bestScore < this.scoreThreshold) {
             // Hubo intentos pero no se alcanzó el threshold → OKNT

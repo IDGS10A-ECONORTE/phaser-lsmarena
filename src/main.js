@@ -9,16 +9,15 @@ import PreloadScene from "./scenes/PreloadScene.js";
 
 
 import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
-// import Minigame1Scene from "./scenes/minigames/Minigame1Scene.js";
-// import Minigame2Scene from "./scenes/minigames/Minigame2Scene.js";
-// import Minigame3Scene from "./scenes/minigames/Minigame3Scene.js";
-// import Minigame4Scene from "./scenes/minigames/Minigame4Scene.js";
-// import Minigame5Scene from "./scenes/minigames/Minigame5Scene.js";
+import Minigame1Scene from "./scenes/minigames/Minigame1Scene.js";
+import Minigame2Scene from "./scenes/minigames/Minigame2Scene.js";
+import Minigame3Scene from "./scenes/minigames/Minigame3Scene.js";
+import Minigame4Scene from "./scenes/minigames/Minigame4Scene.js";
+import Minigame5Scene from "./scenes/minigames/Minigame5Scene.js";
 
-// import PerformanceEvaluationScene from "./scenes/PerformanceScene.js";
+import PerformanceScene from "./scenes/PerformanceScene.js";
 import VictoryScene from "./scenes/VictoryScene.js";
 import DefeatScene from "./scenes/DefeatScene.js";
-// import StatsScene from "./scenes/StatsScene.js";
 import CreditsScene from "./scenes/CreditsScene.js";
 
 const config = {
@@ -39,15 +38,14 @@ const config = {
     TutorialSelectScene,
     TutorialScene,
     MinigameHubScene,
-    // Minigame1Scene,
-    // Minigame2Scene,
-    // Minigame3Scene,
-    // Minigame4Scene,
-    // Minigame5Scene,
-    // PerformanceEvaluationScene,
+    Minigame1Scene,
+    Minigame2Scene,
+    Minigame3Scene,
+    Minigame4Scene,
+    Minigame5Scene,
+    PerformanceScene,
     VictoryScene,
     DefeatScene,
-    // StatsScene,
     CreditsScene,
   ],
   scale: {

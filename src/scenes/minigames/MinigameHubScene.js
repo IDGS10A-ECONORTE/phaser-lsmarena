@@ -99,7 +99,7 @@ export default class MinigameHubScene extends Phaser.Scene {
       .image(0, 0, "btnTransparent")
       .setDisplaySize(500, 140)
       .setInteractive({ cursor: "pointer" })
-      .on("pointerdown", () => this.startMiniggame(true));
+        .on("pointerdown", () => this.startMinigame(true));
 
     compContainer.add([compImg, compText, compHitbox]);
   }
@@ -107,17 +107,36 @@ export default class MinigameHubScene extends Phaser.Scene {
   // ----------------------------------------
   // Control de inicio
   // ----------------------------------------
-  startMiniggame(isCompetition, levelId = null) {
+  startMinigame(isCompetition, levelId = null) {
+    // Inicializar estadísticas en el registry
+    this.registry.set("gameStats", {
+      correct: 0,
+      incorrect: 0,
+      total: 0,
+      accuracy: 0,
+      levelsCompleted: 0,
+      isCompetition: isCompetition,
+    });
+
     if (isCompetition) {
-      this.scene.start("GameScene", {
-        competition: true,
+      // Modo competencia: jugar niveles 1-5
+      this.registry.set("competitionMode", {
+        currentLevel: 1,
         startLevel: 1,
         endLevel: 5,
+        isCompetition: true,
+      });
+      this.scene.start("TransitionScene", {
+        fromScene: this.scene.key,
+        toScene: "Minigame1Scene",
       });
     } else {
-      this.scene.start("GameScene", {
-        competition: false,
-        levelId,
+      // Modo nivel individual
+      const levelNumber = parseInt(levelId.replace("level", ""));
+      this.registry.set("competitionMode", null);
+      this.scene.start("TransitionScene", {
+        fromScene: this.scene.key,
+        toScene: `Minigame${levelNumber}Scene`,
       });
     }
   }

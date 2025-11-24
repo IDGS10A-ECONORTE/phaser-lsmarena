@@ -1,3 +1,5 @@
+import { hideWebcam } from "/src/utils/webcam.js";
+
 export default class DefeatScene extends Phaser.Scene {
   constructor() {
     super("DefeatScene");
@@ -17,6 +19,9 @@ export default class DefeatScene extends Phaser.Scene {
   create() {
     const { width, height } = this.game.config;
 
+    // Ocultar la webcam
+    hideWebcam();
+
     // Fondo negro
     this.add.rectangle(0, 0, width, height, 0x000000).setOrigin(0);
 
@@ -31,20 +36,21 @@ export default class DefeatScene extends Phaser.Scene {
     // Detectar fin del video
     video.video.onended = () => {
       video.destroy(); // limpiar
-      this.scene.start("TransitionScene", {
-        fromScene: this.scene.key,
-        toScene: "IntroScene", // o la escena deseada
-      });
+      this.goToPerformance();
     };
 
     // Opcional: permitir skip con clic
     this.input.once("pointerdown", () => {
       video.stop();
       video.destroy();
-      this.scene.start("TransitionScene", {
-        fromScene: this.scene.key,
-        toScene: "IntroScene",
-      });
+      this.goToPerformance();
+    });
+  }
+
+  goToPerformance() {
+    this.scene.start("TransitionScene", {
+      fromScene: this.scene.key,
+      toScene: "PerformanceScene",
     });
   }
 }
