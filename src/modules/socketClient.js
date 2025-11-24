@@ -11,11 +11,10 @@ export default class SocketClient {
     this.reconnectDelay = 1500;
     this.shouldReconnect = true;
 
+    // Callbacks para mensajes personalizados
+    this.messageCallbacks = [];
+
     this.connect();
-    // Log de todos los mensajes RAW entrantes
-    this.onMessage((raw) => {
-      console.log("[WS][RAW MESSAGE]:", raw);
-    });
   }
 
   connect() {
@@ -42,6 +41,15 @@ export default class SocketClient {
     };
 
     this.ws.onmessage = (msg) => {
+      // Ejecutar todos los callbacks registrados
+      this.messageCallbacks.forEach((callback) => {
+        try {
+          callback(msg.data);
+        } catch (e) {
+          console.error("[WS] Error en callback:", e);
+        }
+      });
+      // Manejar el mensaje normalmente
       this.handleMessage(msg.data);
     };
   }
@@ -71,14 +79,14 @@ export default class SocketClient {
     this.ws.send(data);
   }
 
-  /** NUEVO ➜ Permite registrar mensajes brutos */
+  /**
+   * Registra un callback para recibir todos los mensajes RAW del WebSocket
+   * @param {Function} callback - Función que recibe el mensaje raw (string)
+   */
   onMessage(callback) {
-    const original = this.ws.onmessage;
-
-    this.ws.onmessage = (msg) => {
-      callback(msg.data); // <-- LOG RAW
-      if (original) original(msg);
-    };
+    if (typeof callback === "function") {
+      this.messageCallbacks.push(callback);
+    }
   }
 
   handleMessage(data) {
@@ -86,34 +94,98 @@ export default class SocketClient {
       const parsed = JSON.parse(data);
       console.log("[WS][PARSED]:", parsed);
 
+      // VALIDATION RESULT
       if (parsed.type === "validation_result") {
-        this.onValidationResult(parsed);
+        if (this._validationCallback) {
+          this._validationCallback(parsed);
+        }
       }
     } catch (e) {
       console.error("[WS] Error al parsear mensaje:", e, " RAW:", data);
     }
   }
 
+  /**
+   * Envía un frame (imagen base64) para validación de una seña
+   * @param {string} signID - ID de la seña a validar
+   * @param {string} base64Image - Imagen en formato base64
+   */
   sendFrameForValidation(signID, base64Image) {
-  if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-  const packet = {
-    type: "validate_sign",
-    sign: signID,
-    image: base64Image,
-  };
+    const packet = {
+      type: "validate_sign",
+      sign: signID,
+      image: base64Image,
+    };
 
-  console.log("[WS][SEND VALIDATION]:", {
-    signID,
-    imageLength: base64Image.length,
-  });
+    console.log("[WS][SEND VALIDATION]:", {
+      signID,
+      imageLength: base64Image.length,
+    });
 
-  this.ws.send(JSON.stringify(packet));
-}
+    this.ws.send(JSON.stringify(packet));
+  }
 
+  /**
+   * Envía una imagen desde un canvas al WebSocket
+   * @param {HTMLCanvasElement} canvas - Canvas del cual extraer la imagen
+   */
+  sendImageToWS(canvas) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
+    // Obtener frame en base64 del canvas
+    const imageBase64 = canvas.toDataURL("image/jpeg").split(",")[1];
+
+    this.ws.send(
+      JSON.stringify({
+        type: "image",
+        image_data: imageBase64,
+      })
+    );
+  }
+
+  /**
+   * Establece una seña objetivo en el servidor
+   * @param {string} signName - Nombre de la seña objetivo
+   */
+  setTargetSign(signName) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+    this.ws.send(
+      JSON.stringify({
+        type: "set_target",
+        sign: signName,
+      })
+    );
+  }
+
+  /**
+   * Detiene el objetivo actual en el servidor
+   */
+  stopTarget() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+    this.ws.send(JSON.stringify({ type: "stop_target" }));
+  }
+
+  /**
+   * Permite registrar un callback para recibir resultados de validación
+   */
+  onValidationResult(callback) {
+    if (typeof callback === "function") {
+      this._validationCallback = callback;
+    }
+  }
+
+  /**
+   * Desconecta el WebSocket y detiene la reconexión automática
+   */
   disconnect() {
     this.shouldReconnect = false;
-    if (this.ws) this.ws.close();
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
   }
 }

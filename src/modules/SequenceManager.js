@@ -1,5 +1,5 @@
 // =============================================================
-//  SequenceManager.js - Versión ajustada a tu servidor QDRANT
+//  SequenceManager.js – versión con lógica de score por dificultad
 // =============================================================
 import SocketClient from "/src/modules/socketClient.js";
 
@@ -11,31 +11,36 @@ export default class SequenceManager {
   constructor(scene, difficulty = "easy", onResult = () => {}) {
     this.scene = scene;
     this.difficulty = difficulty;
+    this.onResult = onResult;
 
     this.socket = new SocketClient("ws://localhost:7777", {
       onConnected: () => console.log("WS listo"),
       onValidationResult: (data) => this.handleValidation(data),
     });
 
-    this.onResult = onResult;
-
+    // Timer según dificultad
     this.timerLimit =
       difficulty === "hard" ? 6 : difficulty === "medium" ? 8 : 10;
+
+    // Score mínimo según dificultad
+    this.scoreThreshold =
+      difficulty === "hard" ? 0.80 : difficulty === "medium" ? 0.70 : 0.60;
 
     this.currentItem = null;
     this.isWaitingResponse = false;
     this.timerEvent = null;
 
-    // UI
     this.signImage = null;
+    this.signText = null;
     this.timerText = null;
 
     this.sequence = this.selectDataset();
 
-    // Escucha mensajes del WebSocket
+    // Log raw WS messages
     this.socket.onMessage((msg) => this.handleSocketMessage(msg));
   }
 
+  // =============================================================
   selectDataset() {
     switch (this.difficulty) {
       case "medium":
@@ -47,9 +52,7 @@ export default class SequenceManager {
     }
   }
 
-  // ===========================
-  // Iniciar ejercicio
-  // ===========================
+  // =============================================================
   async start() {
     if (this.timerEvent) this.timerEvent.remove(false);
 
@@ -58,7 +61,6 @@ export default class SequenceManager {
 
     this.showSign(this.currentItem);
 
-    // Esperar a WS antes de enviar
     await this.socket.waitForConnection();
 
     this.sendValidationRequest(this.currentItem.id);
@@ -66,30 +68,27 @@ export default class SequenceManager {
     this.startTimer();
   }
 
+  // =============================================================
   showSign(item) {
     const { width, height } = this.scene.game.config;
 
-    // Elegir aleatoriamente si mostrar cuadrado o círculo
     const useSquare = Math.random() > 0.5;
-
     const textureKey = useSquare
       ? `sign_${item.id}_square`
       : `sign_${item.id}_circle`;
 
-    // Imagen de la seña
     if (!this.signImage) {
       this.signImage = this.scene.add
-        .image(width * 0.5, height * 0.45, textureKey)
+        .image(width / 2, height * 0.45, textureKey)
         .setOrigin(0.5)
         .setScale(0.85);
     } else {
       this.signImage.setTexture(textureKey);
     }
 
-    // TEXTO DE LA PALABRA
     if (!this.signText) {
       this.signText = this.scene.add
-        .text(width * 0.5, height * 0.75, item.word, {
+        .text(width / 2, height * 0.75, item.word, {
           fontFamily: "Arial",
           fontSize: "42px",
           color: "#ffff00",
@@ -100,10 +99,9 @@ export default class SequenceManager {
       this.signText.setText(item.word);
     }
 
-    // CONTADOR
     if (!this.timerText) {
       this.timerText = this.scene.add
-        .text(width * 0.5, height * 0.15, "", {
+        .text(width / 2, height * 0.15, "", {
           fontFamily: "Arial",
           fontSize: "56px",
           color: "#ffffff",
@@ -112,28 +110,33 @@ export default class SequenceManager {
     }
   }
 
-  // ===========================
-  // Enviar solicitud de validación
-  // ===========================
+  // =============================================================
   sendValidationRequest(expectedId) {
-    if (!this.socket) {
-      console.error("Socket no inicializado");
-      return;
-    }
-
-    this.isWaitingResponse = true;
-
-    const payload = {
-      type: "validate_sign",
-      expected: expectedId,
-    };
-
-    this.socket.send(JSON.stringify(payload));
+  if (!this.socket) {
+    console.error("Socket no inicializado");
+    return;
   }
 
-  // ===========================
-  // Procesar mensaje del servidor
-  // ===========================
+  this.isWaitingResponse = true;
+
+  console.log("[SequenceManager] SET TARGET:", expectedId);
+
+  // 1) Primero decirle al servidor cuál es la seña objetivo
+  this.socket.setTargetSign(expectedId);
+
+  // 2) Luego mandar el comando de validación
+  const payload = {
+    type: "validate_sign",
+    expected: expectedId,
+  };
+
+  console.log("[SequenceManager] SEND VALIDATION:", payload);
+
+  this.socket.send(JSON.stringify(payload));
+}
+
+
+  // =============================================================
   handleSocketMessage(msg) {
     let data;
 
@@ -145,24 +148,51 @@ export default class SequenceManager {
     }
 
     if (data.type !== "validation_result") return;
-
     if (!this.isWaitingResponse) return;
 
     this.isWaitingResponse = false;
 
-    const result = {
-      status: data.success ? "success" : "fail",
-      message: data.message, // texto del servidor
-      score: data.score, // número flotante
-      expected: this.currentItem.id,
-    };
+    const result = this.evaluateResult(data);
 
     this.finishSequence(result);
   }
 
-  // ===========================
-  // Temporizador
-  // ===========================
+  // =============================================================
+  // AQUI SE DECIDE OK / OKNT / TIME
+  // =============================================================
+  evaluateResult(data) {
+    const score = data.score || 0;
+
+    console.log(
+      `[SequenceManager] SCORE=${score}, threshold=${this.scoreThreshold}`
+    );
+
+    if (score >= this.scoreThreshold) {
+      return {
+        status: "ok",
+        score,
+        expected: this.currentItem.id,
+      };
+    }
+
+    // score insuficiente pero hubo gesto
+    if (score > 0 && score < this.scoreThreshold) {
+      return {
+        status: "oknt",
+        score,
+        expected: this.currentItem.id,
+      };
+    }
+
+    // no hubo gesto o falla total
+    return {
+      status: "timeout",
+      score: 0,
+      expected: this.currentItem.id,
+    };
+  }
+
+  // =============================================================
   startTimer() {
     let timeLeft = this.timerLimit;
 
@@ -180,7 +210,6 @@ export default class SequenceManager {
 
           const result = {
             status: "timeout",
-            message: "Tiempo agotado",
             score: 0,
             expected: this.currentItem.id,
           };
@@ -191,13 +220,12 @@ export default class SequenceManager {
     });
   }
 
-  // ===========================
-  // Terminar secuencia → devolver callback
-  // ===========================
+  // =============================================================
   finishSequence(result) {
     if (this.timerEvent) this.timerEvent.remove(false);
 
-    // Pasar exactamente lo que la escena debe usar
+    console.log("[SequenceManager] RESULT:", result);
+
     this.onResult(result);
   }
 }
