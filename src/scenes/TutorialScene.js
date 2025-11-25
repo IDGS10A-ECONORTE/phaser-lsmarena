@@ -64,6 +64,7 @@ export default class TutorialScene extends Phaser.Scene {
     introVideo.play(false);
 
     introVideo.video.onended = () => {
+      this.input.removeAllListeners("pointerdown");
       introVideo.destroy();
       this.initTutorial();
     };
@@ -214,7 +215,10 @@ export default class TutorialScene extends Phaser.Scene {
 
       this.transcriptionText
         .setText(step.transcription)
-        .setPosition(rightX, this.signImg.y + this.signImg.displayHeight / 2 + 30);
+        .setPosition(
+          rightX,
+          this.signImg.y + this.signImg.displayHeight / 2 + 30
+        );
     }
   }
 
@@ -236,11 +240,11 @@ export default class TutorialScene extends Phaser.Scene {
 
     // IMPORTANTE: remover los eventos que pasan de diálogos
     this.input.removeAllListeners();
-    
+
     // Inicializar práctica
     this.startPractice = true;
     this.sequenceCount = 0;
-    
+
     const difficulty = this.registry.get("difficulty") || "easy";
     // Crear SequenceManager
     this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
@@ -256,7 +260,9 @@ export default class TutorialScene extends Phaser.Scene {
     // Incrementar contador de secuencias
     if (this.startPractice) {
       this.sequenceCount++;
-      console.log(`[TutorialScene] Secuencias completadas: ${this.sequenceCount}/10`);
+      console.log(
+        `[TutorialScene] Secuencias completadas: ${this.sequenceCount}/10`
+      );
     }
 
     // Reusar exactamente los FX visuales ya existentes
@@ -422,15 +428,17 @@ export default class TutorialScene extends Phaser.Scene {
 
   // 🔥 Ir al hub de minijuegos
   goToMinigameHub() {
-    console.log("[TutorialScene] Finalizando práctica, yendo a MinigameHubScene");
+    console.log(
+      "[TutorialScene] Finalizando práctica, yendo a MinigameHubScene"
+    );
     this.startPractice = false;
-    
+
     // Limpiar recursos
     if (this.sequenceManager) {
       this.sequenceManager.destroy();
       this.sequenceManager = null;
     }
-    
+
     // Ir a MinigameHubScene
     this.scene.start("MinigameHubScene");
   }
