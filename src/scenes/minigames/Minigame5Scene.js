@@ -27,6 +27,19 @@ export default class Minigame5Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.game.config;
+    this.roundsCompleted = 0;
+
+    // ⭐ AÑADIR ESTO: Reiniciar las estadísticas del juego
+    // Asegura que el contador de aciertos/errores empiece desde cero para este minijuego.
+    // **Asumo que quieres empezar de cero en cada intento.**
+    if (!this.registry.get("competitionMode")) {
+      this.registry.set("gameStats", {
+        correct: 0,
+        incorrect: 0,
+        total: 0,
+        accuracy: 0,
+      });
+    }
 
     this.add
       .image(0, 0, "minigame5Bg")
@@ -199,6 +212,8 @@ export default class Minigame5Scene extends Phaser.Scene {
       this.registry.set("gameStats", stats);
     }
 
+    this.scene.stop(this.scene.key);
+
     if (won) {
       this.scene.start("TransitionScene", {
         fromScene: this.scene.key,
@@ -223,7 +238,7 @@ export default class Minigame5Scene extends Phaser.Scene {
     const { width, height } = this.game.config;
 
     this.targetWordText = this.add
-      .text(width / 2, height * 0.18, "Replicando...", {
+      .text(width / 2, height * 0.18, "Realiza la seña correcta, una correcta y 2 erroneas.", {
         fontFamily: "Arial",
         fontSize: "64px",
         color: "#ffffff",
@@ -248,8 +263,7 @@ export default class Minigame5Scene extends Phaser.Scene {
     const dataset = this.sequenceManager.sequence || [];
     if (!dataset.length) return;
 
-    const target =
-      dataset[Math.floor(Math.random() * dataset.length)];
+    const target = dataset[Math.floor(Math.random() * dataset.length)];
     this.currentTarget = target;
 
     const decoys = Phaser.Utils.Array.Shuffle(
@@ -274,4 +288,3 @@ export default class Minigame5Scene extends Phaser.Scene {
     this.sequenceManager.start(false, target);
   }
 }
-

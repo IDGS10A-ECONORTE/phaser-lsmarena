@@ -13,6 +13,7 @@ export default class Minigame3Scene extends Phaser.Scene {
     this.videoElement = null;
     this.fireSprites = [];
     this.firesExtinguished = 0;
+    this.roundsCompletedInMinigame = 0;
   }
 
   preload() {
@@ -25,6 +26,18 @@ export default class Minigame3Scene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.game.config;
+    this.firesExtinguished = 0;
+    this.roundsCompletedInMinigame = 0;
+
+    // ⭐ AÑADIR ESTO: Reiniciar las estadísticas del juego si no estás en modo competición
+    if (!this.registry.get("competitionMode")) {
+      this.registry.set("gameStats", {
+        correct: 0,
+        incorrect: 0,
+        total: 0,
+        accuracy: 0,
+      });
+    }
 
     this.add
       .image(0, 0, "minigame3Bg")
@@ -144,8 +157,11 @@ export default class Minigame3Scene extends Phaser.Scene {
 
     this.showResultFX(result.status);
 
+    // ⭐ AÑADIR: Incrementar el contador local para este minijuego
+    this.roundsCompletedInMinigame++;
+
     this.time.delayedCall(1000, () => {
-      if (stats.total >= 10) {
+      if (this.roundsCompletedInMinigame >= 10) {
         this.finishMinigame();
       } else {
         this.sequenceManager.start();
@@ -201,6 +217,9 @@ export default class Minigame3Scene extends Phaser.Scene {
       if (competitionMode.currentLevel < competitionMode.endLevel) {
         competitionMode.currentLevel++;
         this.registry.set("competitionMode", competitionMode);
+
+        this.scene.stop(this.scene.key);
+
         this.scene.start("TransitionScene", {
           fromScene: this.scene.key,
           toScene: `Minigame${competitionMode.currentLevel}Scene`,
@@ -262,8 +281,7 @@ export default class Minigame3Scene extends Phaser.Scene {
       return;
     }
 
-    const sprite =
-      remaining[Phaser.Math.Between(0, remaining.length - 1)];
+    const sprite = remaining[Phaser.Math.Between(0, remaining.length - 1)];
 
     this.tweens.add({
       targets: sprite,
@@ -281,4 +299,3 @@ export default class Minigame3Scene extends Phaser.Scene {
     });
   }
 }
-
