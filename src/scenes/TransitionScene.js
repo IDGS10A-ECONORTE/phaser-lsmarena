@@ -208,7 +208,7 @@ export default class TransitionScene extends Phaser.Scene {
     // -----------------------------
     // Pasar a la escena destino después de 1.2 segundos
     // -----------------------------
-    this.time.delayedCall(1000, () => {
+    this.time.delayedCall(6500, () => {
       if (this.toScene) {
         this.scene.start(this.toScene);
       } else {

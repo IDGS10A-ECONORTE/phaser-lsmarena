@@ -39,6 +39,16 @@ export default class Minigame1Scene extends Phaser.Scene {
     // Obtener dificultad del registry
     const difficulty = this.registry.get("selectedDifficulty") || "easy";
 
+    // ⭐ AÑADIR: Reinicio de estadísticas para partidas no-competición
+    if (!this.registry.get("competitionMode")) {
+      this.registry.set("gameStats", {
+        correct: 0,
+        incorrect: 0,
+        total: 0,
+        accuracy: 0,
+      });
+    }
+
     // Crear SequenceManager
     this.sequenceManager = new SequenceManager(
       this,
@@ -141,44 +151,73 @@ export default class Minigame1Scene extends Phaser.Scene {
   }
 
   handleSequenceResult(result) {
-    // En modo deletreo, solo contar cuando se completa toda la palabra
-    if (this.sequenceManager.spellingMode && result.spellingCompleted) {
-      // Palabra completada en modo deletreo
-      const stats = this.registry.get("gameStats") || {
-        correct: 0,
-        incorrect: 0,
-        total: 0,
-        accuracy: 0,
-      };
-
-      stats.total++;
+    // En modo deletreo, se ejecuta por cada letra/secuencia.
+    if (this.sequenceManager.spellingMode) {
+      // Mostrar FX por letra
+      // La información del comando actual (letra) debería estar en 'result'
+      // Si la letra es correcta, muestra 'successFx'
       if (result.status === "ok") {
-        stats.correct++;
+        // ⭐ CAMBIO 1: Mostrar FX por cada letra correcta
+        this.showResultFX(
+          result.status,
+          result.currentLetter || result.expectedSign
+        );
       } else {
-        stats.incorrect++;
+        this.showResultFX(result.status);
       }
 
-      stats.accuracy = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
-      this.registry.set("gameStats", stats);
+      if (result.spellingCompleted) {
+        // Palabra completada en modo deletreo
 
-      // Mostrar FX visual
-      this.showResultFX(result.status);
+        // **Actualización de Estadísticas (Solo cuando la palabra se completa)**
+        const stats = this.registry.get("gameStats") || {
+          correct: 0,
+          incorrect: 0,
+          total: 0,
+          accuracy: 0,
+        };
 
-       this.completedSpellingRounds++;
-
-      // Continuar o terminar
-      this.time.delayedCall(1000, () => {
-        if (this.completedSpellingRounds >= this.maxSpellingRounds) {
-          this.finishMinigame();
+        stats.total++;
+        // NOTA: Asumo que el 'result.status' final de la palabra es "ok" si se completó correctamente,
+        // o "fail" si hubo errores en alguna letra. El SequenceManager debe dar este status final.
+        if (result.status === "ok") {
+          stats.correct++;
         } else {
-          // Reiniciar con nueva palabra
-          this.sequenceManager.start(true);
+          stats.incorrect++;
         }
+
+        stats.accuracy =
+          stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+        this.registry.set("gameStats", stats);
+
+        // ⭐ CAMBIO 2: Mostrar FX de éxito de la palabra completa, incluyendo la palabra
+        // Nota: El `result.word` debe ser la palabra que se deletreó.
+        const wordCompleted = this.sequenceManager.currentWord; // Asumo que el manager tiene la palabra actual
+        this.showResultFX(result.status, wordCompleted);
+
+        this.completedSpellingRounds++;
+
+        // Continuar o terminar (con delay de 1000ms después del FX)
+        this.time.delayedCall(1000, () => {
+          if (this.completedSpellingRounds >= this.maxSpellingRounds) {
+            this.finishMinigame();
+          } else {
+            // Reiniciar con nueva palabra
+            this.sequenceManager.start(true);
+          }
+        });
+        return;
+      }
+
+      // ⭐ AÑADIR: Delay de 1 segundo después de cada comando completado
+      // Si la letra no completó la palabra, añade el delay y continúa.
+      this.time.delayedCall(1000, () => {
+        this.sequenceManager.start(true);
       });
       return;
     }
 
-    // Modo normal: actualizar estadísticas por cada secuencia
+    // Modo normal (sin cambios relevantes solicitados)
     if (!this.sequenceManager.spellingMode) {
       const stats = this.registry.get("gameStats") || {
         correct: 0,
@@ -195,7 +234,8 @@ export default class Minigame1Scene extends Phaser.Scene {
       }
 
       // Calcular precisión
-      stats.accuracy = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+      stats.accuracy =
+        stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
 
       this.registry.set("gameStats", stats);
 
@@ -214,7 +254,8 @@ export default class Minigame1Scene extends Phaser.Scene {
     }
   }
 
-  showResultFX(result) {
+  // ⭐ CAMBIO 3: La función ahora acepta un texto opcional (la palabra)
+  showResultFX(result, optionalText = null) {
     const fxKey =
       result === "ok"
         ? "successFx"
@@ -230,14 +271,47 @@ export default class Minigame1Scene extends Phaser.Scene {
       .setAlpha(0)
       .setDepth(8);
 
+    let textFx = null;
+    if (optionalText) {
+      textFx = this.add
+        .text(width / 2, height / 2, optionalText.toUpperCase(), {
+          fontFamily: "Arial",
+          fontSize: "64px",
+          color: "#00ff00",
+          stroke: "#000000",
+          strokeThickness: 5,
+          align: "center",
+        })
+        .setOrigin(0.5)
+        .setDepth(9)
+        .setAlpha(0);
+
+      // Mover el texto ligeramente por debajo del FX de imagen
+      textFx.y += 100;
+    }
+
     this.tweens.add({
       targets: fx,
       alpha: 1,
       duration: 300,
       yoyo: true,
       hold: 400,
-      onComplete: () => fx.destroy(),
+      onComplete: () => {
+        fx.destroy();
+        if (textFx) textFx.destroy();
+      },
     });
+
+    // Animación para el texto opcional (si existe)
+    if (textFx) {
+      this.tweens.add({
+        targets: textFx,
+        alpha: 1,
+        duration: 300,
+        yoyo: true,
+        hold: 400,
+      });
+    }
   }
 
   finishMinigame() {
@@ -249,6 +323,9 @@ export default class Minigame1Scene extends Phaser.Scene {
       this.sequenceManager.destroy();
       this.sequenceManager = null;
     }
+
+    // ⭐ AÑADIR: Detener la escena antes de empezar la transición
+    this.scene.stop(this.scene.key);
 
     // Determinar si ganó o perdió (por ejemplo, si accuracy >= 70% gana)
     const won = stats.accuracy >= 70;
@@ -334,4 +411,3 @@ export default class Minigame1Scene extends Phaser.Scene {
     }
   }
 }
-
