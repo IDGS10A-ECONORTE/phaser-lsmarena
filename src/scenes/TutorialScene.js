@@ -18,6 +18,7 @@ export default class TutorialScene extends Phaser.Scene {
     this.sequenceManager = null;
     this.sequenceCount = 0; // Contador de secuencias completadas
     this.startPractice = false; // Flag para indicar que comenzó la práctica
+    this.dialogTimerEvent = null;
   }
 
   preload() {
@@ -64,15 +65,19 @@ export default class TutorialScene extends Phaser.Scene {
     introVideo.play(false);
 
     introVideo.video.onended = () => {
+      // Al terminar el video de forma natural, desactivar el listener de atajo
       this.input.removeAllListeners("pointerdown");
       introVideo.destroy();
       this.initTutorial();
     };
 
+    // ⭐ SOLUCIÓN BUG ANTERIOR: Retraso en el atajo para evitar doble activación
     this.input.once("pointerdown", () => {
       introVideo.stop();
       introVideo.destroy();
-      this.initTutorial();
+      this.time.delayedCall(50, () => {
+        this.initTutorial();
+      });
     });
 
     // Webcam jugador
@@ -125,6 +130,11 @@ export default class TutorialScene extends Phaser.Scene {
 
   showStep(stepIndex) {
     const step = tutorialDialogs[stepIndex];
+
+    if (this.dialogTimerEvent) {
+      this.dialogTimerEvent.remove();
+      this.dialogTimerEvent = null;
+    }
 
     const charImg =
       step.characterImgs[Math.floor(Math.random() * step.characterImgs.length)];
@@ -220,9 +230,17 @@ export default class TutorialScene extends Phaser.Scene {
           this.signImg.y + this.signImg.displayHeight / 2 + 30
         );
     }
+
+    this.dialogTimerEvent = this.time.delayedCall(3500, () => {
+      this.nextStep();
+    });
   }
 
   nextStep() {
+    if (this.dialogTimerEvent) {
+      this.dialogTimerEvent.remove();
+      this.dialogTimerEvent = null;
+    }
     this.currentStep++;
 
     if (this.currentStep >= tutorialDialogs.length) {
@@ -245,8 +263,11 @@ export default class TutorialScene extends Phaser.Scene {
     this.startPractice = true;
     this.sequenceCount = 0;
 
-    const difficulty = this.registry.get("difficulty") || "easy";
+    // ⭐ CAMBIO 1: Obtener la dificultad para SequenceManager
+    const difficulty = this.registry.get("selectedDifficulty") || "easy";
+
     // Crear SequenceManager
+    // SequenceManager debería usar la dificultad internamente para ajustar tiempos/score
     this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
       this.handleSequenceResult(result);
     });
@@ -266,11 +287,12 @@ export default class TutorialScene extends Phaser.Scene {
     }
 
     // Reusar exactamente los FX visuales ya existentes
-    this.onSequenceResult(result.status);
+    this.onSequenceResult(result.status, result.resultScore);
   }
 
   // 🔥 Efectos visuales dependiendo del resultado
-  onSequenceResult(result) {
+  // El segundo parámetro `score` es importante para la lógica de captura/delay
+  onSequenceResult(result, score = 0) {
     let fxKey = "failFx"; // Por defecto OKNT
 
     // Mapear los estados del SequenceManager a los FX
@@ -294,14 +316,39 @@ export default class TutorialScene extends Phaser.Scene {
       onComplete: () => fx.destroy(),
     });
 
-    // Verificar si se completaron 10 secuencias
-    if (this.startPractice && this.sequenceCount >= 10) {
-      // Esperar un poco antes de mostrar el diálogo
-      this.time.delayedCall(1500, () => {
-        this.showContinueDialog();
-      });
+    // ⭐ CAMBIO 2 y 3: Lógica de Delay de 1 Segundo y Siguiente Secuencia
+    const nextActionDelay = 1000; // 1 segundo de delay
+
+    if (this.startPractice) {
+      if (result === "ok") {
+        // Gesto correcto: Esperar 1 segundo ANTES de pasar a la siguiente secuencia
+        // Aquí deberías realizar la captura y envío al servidor.
+        this.time.delayedCall(nextActionDelay, () => {
+          // *** Aquí va la lógica para tomar la captura del video/frame y enviarla al servidor ***
+          console.log(
+            `[TutorialScene] Captura enviada al servidor después de ${nextActionDelay}ms (Score: ${score})`
+          );
+
+          // Verificar si se completaron 10 secuencias
+          if (this.sequenceCount >= 10) {
+            this.showContinueDialog();
+          } else {
+            this.sequenceManager.start();
+          }
+        });
+      } else {
+        // Gesto incorrecto (fail o timeout): Esperar 1 segundo antes de la siguiente secuencia
+        this.time.delayedCall(nextActionDelay, () => {
+          // Verificar si se completaron 10 secuencias
+          if (this.sequenceCount >= 10) {
+            this.showContinueDialog();
+          } else {
+            this.sequenceManager.start();
+          }
+        });
+      }
     } else {
-      // Siguiente en la secuencia
+      // Lógica de fallback, aunque startPractice siempre debería ser true aquí.
       this.time.delayedCall(1000, () => {
         this.sequenceManager.start();
       });
@@ -311,7 +358,7 @@ export default class TutorialScene extends Phaser.Scene {
   // 🔥 Diálogo para preguntar si desea continuar practicando
   showContinueDialog() {
     const { width, height } = this.game.config;
-
+    // ... (Código showContinueDialog sin cambios) ...
     // Pausar el SequenceManager
     if (this.sequenceManager) {
       this.sequenceManager.isWaitingResponse = false;
@@ -438,6 +485,9 @@ export default class TutorialScene extends Phaser.Scene {
       this.sequenceManager.destroy();
       this.sequenceManager = null;
     }
+
+    // Detener la escena antes de empezar la transición
+    this.scene.stop(this.scene.key);
 
     // Ir a MinigameHubScene
     this.scene.start("MinigameHubScene");
