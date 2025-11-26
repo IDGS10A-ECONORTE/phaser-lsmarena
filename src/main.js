@@ -6,6 +6,7 @@ import CharacterSelectScene from "./scenes/CharacterSelectScene.js";
 import TutorialSelectScene from "./scenes/TutorialSelectScene.js";
 import TutorialScene from "./scenes/TutorialScene.js";
 import PreloadScene from "./scenes/PreloadScene.js";
+import PauseMenuScene from "./scenes/PauseMenuScene.js"
 
 
 import MinigameHubScene from "./scenes/minigames/MinigameHubScene.js";
@@ -44,6 +45,7 @@ const config = {
     Minigame4Scene,
     Minigame5Scene,
     PerformanceScene,
+    PauseMenuScene,
     VictoryScene,
     DefeatScene,
     CreditsScene,

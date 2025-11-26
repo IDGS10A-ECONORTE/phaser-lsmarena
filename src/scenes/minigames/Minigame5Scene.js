@@ -62,6 +62,24 @@ export default class Minigame5Scene extends Phaser.Scene {
     this.startCountdown(() => {
       this.startSignRound();
     });
+
+    // Este código va en la función create() de cada MinigameScene.
+    this.escKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+
+    this.escKey.on("down", () => {
+      // Si ya estamos en pausa, ignorar
+      if (this.scene.isPaused()) return;
+
+      // Pausar la escena del minijuego
+      this.scene.pause();
+
+      // Lanzar la Escena de Pausa
+      this.scene.launch("PauseMenuScene", {
+        fromSceneKey: this.scene.key, // Envía la clave de la escena actual
+      });
+    });
   }
 
   startCountdown(onComplete) {
@@ -238,14 +256,19 @@ export default class Minigame5Scene extends Phaser.Scene {
     const { width, height } = this.game.config;
 
     this.targetWordText = this.add
-      .text(width / 2, height * 0.18, "Realiza la seña correcta, una correcta y 2 erroneas.", {
-        fontFamily: "Arial",
-        fontSize: "64px",
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 5,
-        align: "center",
-      })
+      .text(
+        width / 2,
+        height * 0.18,
+        "Realiza la seña correcta, una correcta y 2 erroneas.",
+        {
+          fontFamily: "Arial",
+          fontSize: "64px",
+          color: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 5,
+          align: "center",
+        }
+      )
       .setOrigin(0.5)
       .setDepth(6);
 

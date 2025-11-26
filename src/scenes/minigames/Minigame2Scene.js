@@ -47,6 +47,24 @@ export default class Minigame2Scene extends Phaser.Scene {
       // Modo normal para nivel 2
       this.sequenceManager.start(false);
     });
+
+    // Este código va en la función create() de cada MinigameScene.
+    this.escKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+
+    this.escKey.on("down", () => {
+      // Si ya estamos en pausa, ignorar
+      if (this.scene.isPaused()) return;
+
+      // Pausar la escena del minijuego
+      this.scene.pause();
+
+      // Lanzar la Escena de Pausa
+      this.scene.launch("PauseMenuScene", {
+        fromSceneKey: this.scene.key, // Envía la clave de la escena actual
+      });
+    });
   }
 
   startCountdown(onComplete) {
@@ -245,13 +263,15 @@ export default class Minigame2Scene extends Phaser.Scene {
     if (!this.ballSprite) return;
 
     this.tweens.killTweensOf(this.ballSprite);
-    this.ballSprite.setPosition(this.ballBasePosition.x, this.ballBasePosition.y);
+    this.ballSprite.setPosition(
+      this.ballBasePosition.x,
+      this.ballBasePosition.y
+    );
 
     if (result === "ok") {
       // Lanzamiento a la portería
       const targetX =
-        this.game.config.width / 2 +
-        Phaser.Math.Between(-100, 100);
+        this.game.config.width / 2 + Phaser.Math.Between(-100, 100);
       this.tweens.add({
         targets: this.ballSprite,
         x: targetX,
@@ -292,4 +312,3 @@ export default class Minigame2Scene extends Phaser.Scene {
     }
   }
 }
-

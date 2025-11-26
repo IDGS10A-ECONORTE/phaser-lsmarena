@@ -50,6 +50,24 @@ export default class Minigame4Scene extends Phaser.Scene {
     this.startCountdown(() => {
       this.startMemoryRound();
     });
+
+    // Este código va en la función create() de cada MinigameScene.
+    this.escKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+
+    this.escKey.on("down", () => {
+      // Si ya estamos en pausa, ignorar
+      if (this.scene.isPaused()) return;
+
+      // Pausar la escena del minijuego
+      this.scene.pause();
+
+      // Lanzar la Escena de Pausa
+      this.scene.launch("PauseMenuScene", {
+        fromSceneKey: this.scene.key, // Envía la clave de la escena actual
+      });
+    });
   }
 
   startCountdown(onComplete) {
@@ -57,13 +75,18 @@ export default class Minigame4Scene extends Phaser.Scene {
     let count = 3;
 
     const instructionText = this.add
-      .text(width / 2, height / 2 + 140, "Memoriza la seña y repítela cuando desaparezca", {
-        fontFamily: "Arial",
-        fontSize: "32px",
-        color: "#ffffff",
-        align: "center",
-        wordWrap: { width: width * 0.8 },
-      })
+      .text(
+        width / 2,
+        height / 2 + 140,
+        "Memoriza la seña y repítela cuando desaparezca",
+        {
+          fontFamily: "Arial",
+          fontSize: "32px",
+          color: "#ffffff",
+          align: "center",
+          wordWrap: { width: width * 0.8 },
+        }
+      )
       .setOrigin(0.5)
       .setDepth(5);
 
@@ -155,7 +178,8 @@ export default class Minigame4Scene extends Phaser.Scene {
         stats.incorrect++;
       }
 
-      stats.accuracy = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+      stats.accuracy =
+        stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
       this.registry.set("gameStats", stats);
 
       // Mostrar FX visual
@@ -190,7 +214,8 @@ export default class Minigame4Scene extends Phaser.Scene {
         stats.incorrect++;
       }
 
-      stats.accuracy = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+      stats.accuracy =
+        stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
       this.registry.set("gameStats", stats);
 
       this.showResultFX(result.status);
@@ -343,4 +368,3 @@ export default class Minigame4Scene extends Phaser.Scene {
     }
   }
 }
-

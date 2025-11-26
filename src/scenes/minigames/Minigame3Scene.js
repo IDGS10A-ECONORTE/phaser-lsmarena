@@ -60,6 +60,25 @@ export default class Minigame3Scene extends Phaser.Scene {
       // Modo normal para nivel 3
       this.sequenceManager.start(false);
     });
+
+    // Este código va en la función create() de cada MinigameScene.
+
+    this.escKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+
+    this.escKey.on("down", () => {
+      // Si ya estamos en pausa, ignorar
+      if (this.scene.isPaused()) return;
+
+      // Pausar la escena del minijuego
+      this.scene.pause();
+
+      // Lanzar la Escena de Pausa
+      this.scene.launch("PauseMenuScene", {
+        fromSceneKey: this.scene.key, // Envía la clave de la escena actual
+      });
+    });
   }
 
   startCountdown(onComplete) {

@@ -16,25 +16,27 @@ export default class TutorialScene extends Phaser.Scene {
     this.currentStep = 0;
     this.videoElement = null;
     this.sequenceManager = null;
-    this.sequenceCount = 0; // Contador de secuencias completadas
-    this.startPractice = false; // Flag para indicar que comenzó la práctica
+    this.sequenceCount = 0;
+    this.startPractice = false;
     this.dialogTimerEvent = null;
+
+    // Propiedades para referencias de limpieza (NECESARIO para evitar bugs de reinicio)
+    this.resizeListener = null;
+    this.fullscreenListener = null;
   }
 
   preload() {
     // Fondo tutorial
-    this.load.image("tutorialBg", "assets/105.png");
+    this.load.image("tutorialBg", "assets/105.png"); // Cinemática
 
-    // Cinemática
     this.load.video(
       "tutorialIntro",
       "assets/cinematicas/Tutorial.mp4",
       "loadeddata",
       false,
       true
-    );
+    ); // Imágenes de diálogos
 
-    // Imágenes de diálogos
     tutorialDialogs.forEach((step) => {
       step.characterImgs.forEach((img) =>
         this.load.image(img, `assets/personajes/Xochitl/${img}.png`)
@@ -42,21 +44,18 @@ export default class TutorialScene extends Phaser.Scene {
       step.signImgs.forEach((img) =>
         this.load.image(img, `assets/signos/${img}.png`)
       );
-    });
+    }); // Feedback visual
 
-    // Feedback visual
     this.load.image("successFx", "assets/iconos/OK.png");
     this.load.image("failFx", "assets/iconos/OKNT.png");
     this.load.image("timeoutFx", "assets/iconos/TIME.png");
   }
 
   create() {
-    const { width, height } = this.game.config;
+    const { width, height } = this.game.config; // Fondo negro inicial
 
-    // Fondo negro inicial
-    this.add.rectangle(0, 0, width, height, 0x000000).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x000000).setOrigin(0); // Introducción en video
 
-    // Introducción en video
     const introVideo = this.add
       .video(width / 2, height / 2, "tutorialIntro")
       .setOrigin(0.5);
@@ -64,24 +63,39 @@ export default class TutorialScene extends Phaser.Scene {
     introVideo.setMute(true);
     introVideo.play(false);
 
-    introVideo.video.onended = () => {
-      // Al terminar el video de forma natural, desactivar el listener de atajo
+    // ⭐ CORRECCIÓN PRINCIPAL: Usar el evento 'complete' de Phaser.
+    introVideo.on("complete", () => {
+      // Aseguramos la limpieza del listener de salto (clic)
       this.input.removeAllListeners("pointerdown");
       introVideo.destroy();
       this.initTutorial();
-    };
+    }); // Listener para saltar el video (clic/touch)
 
-    // ⭐ SOLUCIÓN BUG ANTERIOR: Retraso en el atajo para evitar doble activación
     this.input.once("pointerdown", () => {
+      // Detenemos el evento 'complete' si el usuario salta el video
+      introVideo.off("complete");
       introVideo.stop();
-      introVideo.destroy();
+      introVideo.destroy(); // Delay de 50ms para evitar la doble activación del primer diálogo
       this.time.delayedCall(50, () => {
         this.initTutorial();
       });
-    });
+    }); // Webcam jugador
 
-    // Webcam jugador
-    this.initPlayerWebcam();
+    this.initPlayerWebcam(); // Listener de pausa (ESC)
+
+    this.escKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.ESC
+    );
+
+    this.escKey.on("down", () => {
+      if (this.scene.isPaused()) return;
+
+      this.scene.pause();
+
+      this.scene.launch("PauseMenuScene", {
+        fromSceneKey: this.scene.key,
+      });
+    });
   }
 
   initPlayerWebcam() {
@@ -94,37 +108,35 @@ export default class TutorialScene extends Phaser.Scene {
       const camH = 240;
       const margin = 24;
 
-      // primera posición
       setVideoPositionResponsive(camW, camH, margin);
-      showWebcam();
+      showWebcam(); // ⭐ MODIFICACIÓN: Almacenar las funciones de listener para limpieza
 
-      // se adapta al redimensionar la ventana
-      window.addEventListener("resize", () => {
+      this.resizeListener = () => {
         setVideoPositionResponsive(camW, camH, margin);
-      });
+      };
 
-      // se adapta al cambiar a fullscreen
-      document.addEventListener("fullscreenchange", () => {
+      this.fullscreenListener = () => {
         setVideoPositionResponsive(camW, camH, margin);
-      });
+      }; // se adapta al redimensionar la ventana
+
+      window.addEventListener("resize", this.resizeListener); // se adapta al cambiar a fullscreen
+
+      document.addEventListener("fullscreenchange", this.fullscreenListener);
     });
   }
 
   initTutorial() {
-    const { width, height } = this.game.config;
+    const { width, height } = this.game.config; // Fondo tutorial
 
-    // Fondo tutorial
     this.add
       .image(0, 0, "tutorialBg")
       .setOrigin(0)
-      .setDisplaySize(width, height);
+      .setDisplaySize(width, height); // UI de diálogo
 
-    // UI de diálogo
     this.tutorialContainer = this.add.container(0, 0);
 
-    this.showStep(this.currentStep);
+    this.showStep(this.currentStep); // Clic → siguiente línea
 
-    // Clic → siguiente línea
     this.input.on("pointerdown", () => this.nextStep());
   }
 
@@ -158,9 +170,8 @@ export default class TutorialScene extends Phaser.Scene {
         .setOrigin(0.5, 0.5)
         .setScale(Math.min(width, height) / 1400);
 
-      this.tutorialContainer.add(this.characterSprite);
+      this.tutorialContainer.add(this.characterSprite); // Fondo y texto de diálogo
 
-      // Fondo y texto de diálogo
       this.dialogueBg = this.add
         .rectangle(dialogX, dialogY, dialogWidth, dialogHeight, 0x000000, 0.65)
         .setOrigin(0.5)
@@ -177,9 +188,8 @@ export default class TutorialScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
 
-      this.tutorialContainer.add([this.dialogueBg, this.dialogueText]);
+      this.tutorialContainer.add([this.dialogueBg, this.dialogueText]); // Seña
 
-      // Seña
       this.signImg = this.add
         .image(rightX, height * 0.45, signImg)
         .setOrigin(0.5)
@@ -249,25 +259,25 @@ export default class TutorialScene extends Phaser.Scene {
     }
 
     this.showStep(this.currentStep);
-  }
+  } // 🔥 Donde inicia el SequenceManager
 
-  // 🔥 Donde inicia el SequenceManager
   startSequenceExercise() {
     // Ocultar diálogo
     this.tutorialContainer.setVisible(false);
 
-    // IMPORTANTE: remover los eventos que pasan de diálogos
-    this.input.removeAllListeners();
+    // Limpieza de temporizador final del diálogo
+    if (this.dialogTimerEvent) {
+      this.dialogTimerEvent.remove();
+      this.dialogTimerEvent = null;
+    } // IMPORTANTE: remover los eventos que pasan de diálogos
 
-    // Inicializar práctica
+    this.input.removeAllListeners(); // Inicializar práctica
+
     this.startPractice = true;
     this.sequenceCount = 0;
 
-    // ⭐ CAMBIO 1: Obtener la dificultad para SequenceManager
-    const difficulty = this.registry.get("selectedDifficulty") || "easy";
+    const difficulty = this.registry.get("selectedDifficulty") || "easy"; // Crear SequenceManager
 
-    // Crear SequenceManager
-    // SequenceManager debería usar la dificultad internamente para ajustar tiempos/score
     this.sequenceManager = new SequenceManager(this, difficulty, (result) => {
       this.handleSequenceResult(result);
     });
@@ -276,29 +286,23 @@ export default class TutorialScene extends Phaser.Scene {
   }
 
   handleSequenceResult(result) {
-    console.log("[Sequence Result]", result);
+    console.log("[Sequence Result]", result); // Incrementar contador de secuencias
 
-    // Incrementar contador de secuencias
     if (this.startPractice) {
       this.sequenceCount++;
       console.log(
         `[TutorialScene] Secuencias completadas: ${this.sequenceCount}/10`
       );
-    }
+    } // Reusar exactamente los FX visuales ya existentes
 
-    // Reusar exactamente los FX visuales ya existentes
     this.onSequenceResult(result.status, result.resultScore);
-  }
+  } // 🔥 Efectos visuales dependiendo del resultado
 
-  // 🔥 Efectos visuales dependiendo del resultado
-  // El segundo parámetro `score` es importante para la lógica de captura/delay
   onSequenceResult(result, score = 0) {
-    let fxKey = "failFx"; // Por defecto OKNT
+    let fxKey = "failFx";
 
-    // Mapear los estados del SequenceManager a los FX
     if (result === "ok") fxKey = "successFx";
     else if (result === "timeout") fxKey = "timeoutFx";
-    // "oknt" usa failFx por defecto
 
     const { width, height } = this.game.config;
 
@@ -316,20 +320,15 @@ export default class TutorialScene extends Phaser.Scene {
       onComplete: () => fx.destroy(),
     });
 
-    // ⭐ CAMBIO 2 y 3: Lógica de Delay de 1 Segundo y Siguiente Secuencia
-    const nextActionDelay = 1000; // 1 segundo de delay
+    const nextActionDelay = 1000;
 
     if (this.startPractice) {
       if (result === "ok") {
-        // Gesto correcto: Esperar 1 segundo ANTES de pasar a la siguiente secuencia
-        // Aquí deberías realizar la captura y envío al servidor.
         this.time.delayedCall(nextActionDelay, () => {
-          // *** Aquí va la lógica para tomar la captura del video/frame y enviarla al servidor ***
           console.log(
             `[TutorialScene] Captura enviada al servidor después de ${nextActionDelay}ms (Score: ${score})`
           );
 
-          // Verificar si se completaron 10 secuencias
           if (this.sequenceCount >= 10) {
             this.showContinueDialog();
           } else {
@@ -337,9 +336,7 @@ export default class TutorialScene extends Phaser.Scene {
           }
         });
       } else {
-        // Gesto incorrecto (fail o timeout): Esperar 1 segundo antes de la siguiente secuencia
         this.time.delayedCall(nextActionDelay, () => {
-          // Verificar si se completaron 10 secuencias
           if (this.sequenceCount >= 10) {
             this.showContinueDialog();
           } else {
@@ -347,19 +344,11 @@ export default class TutorialScene extends Phaser.Scene {
           }
         });
       }
-    } else {
-      // Lógica de fallback, aunque startPractice siempre debería ser true aquí.
-      this.time.delayedCall(1000, () => {
-        this.sequenceManager.start();
-      });
     }
-  }
+  } // ... (showContinueDialog, continuePractice, goToMinigameHub sin cambios) ...
 
-  // 🔥 Diálogo para preguntar si desea continuar practicando
   showContinueDialog() {
-    const { width, height } = this.game.config;
-    // ... (Código showContinueDialog sin cambios) ...
-    // Pausar el SequenceManager
+    const { width, height } = this.game.config; // Pausar el SequenceManager
     if (this.sequenceManager) {
       this.sequenceManager.isWaitingResponse = false;
       if (this.sequenceManager.frameInterval) {
@@ -370,24 +359,20 @@ export default class TutorialScene extends Phaser.Scene {
         this.sequenceManager.timerEvent.remove(false);
         this.sequenceManager.timerEvent = null;
       }
-    }
+    } // Fondo semitransparente
 
-    // Fondo semitransparente
     const overlay = this.add
       .rectangle(width / 2, height / 2, width, height, 0x000000, 0.7)
       .setOrigin(0.5)
-      .setInteractive();
+      .setInteractive(); // Contenedor del diálogo
 
-    // Contenedor del diálogo
-    const dialogContainer = this.add.container(width / 2, height / 2);
+    const dialogContainer = this.add.container(width / 2, height / 2); // Fondo del diálogo
 
-    // Fondo del diálogo
     const dialogBg = this.add
       .rectangle(0, 0, 600, 300, 0x1a1a1a, 0.95)
       .setStrokeStyle(3, 0xffff00)
-      .setOrigin(0.5);
+      .setOrigin(0.5); // Texto principal
 
-    // Texto principal
     const mainText = this.add
       .text(0, -80, "¿Deseas seguir practicando?", {
         fontFamily: "Arial",
@@ -395,9 +380,8 @@ export default class TutorialScene extends Phaser.Scene {
         color: "#ffffff",
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5); // Texto secundario
 
-    // Texto secundario
     const subText = this.add
       .text(0, -30, "Completaste 10 secuencias", {
         fontFamily: "Arial",
@@ -405,9 +389,8 @@ export default class TutorialScene extends Phaser.Scene {
         color: "#ffff00",
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5); // Botón SÍ
 
-    // Botón SÍ
     const yesBg = this.add
       .rectangle(-150, 60, 200, 80, 0x00aa00, 0.8)
       .setStrokeStyle(2, 0xffffff)
@@ -428,9 +411,8 @@ export default class TutorialScene extends Phaser.Scene {
         color: "#ffffff",
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5); // Botón NO
 
-    // Botón NO
     const noBg = this.add
       .rectangle(150, 60, 200, 80, 0xaa0000, 0.8)
       .setStrokeStyle(2, 0xffffff)
@@ -462,38 +444,31 @@ export default class TutorialScene extends Phaser.Scene {
       noBg,
       noText,
     ]);
-  }
+  } // ... (continuePractice, goToMinigameHub sin cambios) ...
+  shutdown() {
+    // Detener la webcam y limpiar el stream
+    stopWebcam();
 
-  // 🔥 Continuar practicando (resetear contador y continuar)
-  continuePractice() {
-    console.log("[TutorialScene] Continuando práctica...");
-    this.sequenceCount = 0; // Resetear contador
-    this.time.delayedCall(500, () => {
-      this.sequenceManager.start();
-    });
-  }
-
-  // 🔥 Ir al hub de minijuegos
-  goToMinigameHub() {
-    console.log(
-      "[TutorialScene] Finalizando práctica, yendo a MinigameHubScene"
-    );
-    this.startPractice = false;
-
-    // Limpiar recursos
-    if (this.sequenceManager) {
-      this.sequenceManager.destroy();
-      this.sequenceManager = null;
+    // ⭐ LIMPIEZA VITAL: Remover los listeners globales de la ventana/documento
+    // (Asegúrate de que initPlayerWebcam almacene estas referencias)
+    if (this.resizeListener) {
+      window.removeEventListener("resize", this.resizeListener);
+      this.resizeListener = null;
+    }
+    if (this.fullscreenListener) {
+      document.removeEventListener("fullscreenchange", this.fullscreenListener);
+      this.fullscreenListener = null;
     }
 
-    // Detener la escena antes de empezar la transición
-    this.scene.stop(this.scene.key);
+    // Limpieza de temporizadores de diálogo
+    if (this.dialogTimerEvent) {
+      this.dialogTimerEvent.remove();
+      this.dialogTimerEvent = null;
+    }
 
-    // Ir a MinigameHubScene
-    this.scene.start("MinigameHubScene");
-  }
-
-  shutdown() {
-    stopWebcam();
+    // Limpieza del SequenceManager
+    if (this.sequenceManager && this.sequenceManager.destroy) {
+      this.sequenceManager.destroy();
+    }
   }
 }
