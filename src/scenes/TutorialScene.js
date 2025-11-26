@@ -445,8 +445,36 @@ export default class TutorialScene extends Phaser.Scene {
       noText,
     ]);
   } // ... (continuePractice, goToMinigameHub sin cambios) ...
+  // 🔥 Continuar practicando (resetear contador y continuar)
+  continuePractice() {
+    console.log("[TutorialScene] Continuando práctica...");
+    this.sequenceCount = 0; // Resetear contador
+    this.time.delayedCall(500, () => {
+      this.sequenceManager.start();
+    });
+  }
+
+  // 🔥 Ir al hub de minijuegos
+  goToMinigameHub() {
+    console.log(
+      "[TutorialScene] Finalizando práctica, yendo a MinigameHubScene"
+    );
+    this.startPractice = false;
+
+    // Limpiar recursos
+    if (this.sequenceManager) {
+      this.sequenceManager.destroy();
+      this.sequenceManager = null;
+    }
+
+    // Detener la escena antes de empezar la transición
+    this.scene.stop(this.scene.key);
+
+    // Ir a MinigameHubScene
+    this.scene.start("MinigameHubScene");
+  }
+
   shutdown() {
-    // Detener la webcam y limpiar el stream
     stopWebcam();
 
     // ⭐ LIMPIEZA VITAL: Remover los listeners globales de la ventana/documento
