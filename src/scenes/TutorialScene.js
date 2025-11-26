@@ -83,19 +83,19 @@ export default class TutorialScene extends Phaser.Scene {
 
     this.initPlayerWebcam(); // Listener de pausa (ESC)
 
-    this.escKey = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.ESC
-    );
+    // this.escKey = this.input.keyboard.addKey(
+    //   Phaser.Input.Keyboard.KeyCodes.ESC
+    // );
 
-    this.escKey.on("down", () => {
-      if (this.scene.isPaused()) return;
+    // this.escKey.on("down", () => {
+    //   if (this.scene.isPaused()) return;
 
-      this.scene.pause();
+    //   this.scene.pause();
 
-      this.scene.launch("PauseMenuScene", {
-        fromSceneKey: this.scene.key,
-      });
-    });
+    //   this.scene.launch("PauseMenuScene", {
+    //     fromSceneKey: this.scene.key,
+    //   });
+    // });
   }
 
   initPlayerWebcam() {
