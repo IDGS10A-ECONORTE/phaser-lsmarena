@@ -10,9 +10,9 @@ export default class IntroScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.video("intro1", "assets/cinematicas/Intro1.mp4");
-    this.load.video("intro2", "assets/cinematicas/Intro2.mp4");
-    this.load.image(this.extraImageKey, "assets/escenas/Diversidad.png");
+    this.load.video("intro1", "/static/assets/cinematicas/Intro1.mp4");
+    this.load.video("intro2", "/static/assets/cinematicas/Intro2.mp4");
+    this.load.image(this.extraImageKey, "/static/assets/escenas/Diversidad.png");
   }
 
   create() {

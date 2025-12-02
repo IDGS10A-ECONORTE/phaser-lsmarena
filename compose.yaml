@@ -1,0 +1,9 @@
+services:
+  webpage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lsm-webpage
+    ports:
+      - 5000:5000
+    command: ["py", "main,py"]

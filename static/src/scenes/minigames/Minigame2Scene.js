@@ -1,10 +1,10 @@
-import SequenceManager from "/src/modules/SequenceManager.js";
+import SequenceManager from "/static/src/modules/SequenceManager.js";
 import {
   initWebcam,
   stopWebcam,
   showWebcam,
   setVideoPositionResponsive,
-} from "/src/utils/webcam.js";
+} from "/static/src/utils/webcam.js";
 
 export default class Minigame2Scene extends Phaser.Scene {
   constructor() {
@@ -16,11 +16,11 @@ export default class Minigame2Scene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("minigame2Bg", "assets/minigames/40.png");
-    this.load.image("minigame2Ball", "assets/iconos/49.png");
-    this.load.image("successFx", "assets/iconos/OK.png");
-    this.load.image("failFx", "assets/iconos/OKNT.png");
-    this.load.image("timeoutFx", "assets/iconos/TIME.png");
+    this.load.image("minigame2Bg", "/static/assets/minigames/40.png");
+    this.load.image("minigame2Ball", "/static/assets/iconos/49.png");
+    this.load.image("successFx", "/static/assets/iconos/OK.png");
+    this.load.image("failFx", "/static/assets/iconos/OKNT.png");
+    this.load.image("timeoutFx", "/static/assets/iconos/TIME.png");
   }
 
   create() {

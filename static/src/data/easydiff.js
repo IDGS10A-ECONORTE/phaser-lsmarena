@@ -4,8 +4,8 @@ const easydiff = [
     id: letter.toLowerCase(),
     word: letter,
     images: {
-      square: `assets/signos/${letter}.png`,
-      circle: `assets/signos2/${letter}.png`,
+      square: `/static/assets/signos/${letter}.png`,
+      circle: `/static/assets/signos2/${letter}.png`,
     },
     description: `Representación en LSM de la letra ${letter}.`,
     difficulty: "easy",

@@ -8,7 +8,7 @@ export default class MainMenuScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("menuBgMain", "assets/100.png");
+    this.load.image("menuBgMain", "/static/assets/100.png");
   }
 
   create() {
@@ -115,7 +115,7 @@ export default class MainMenuScene extends Phaser.Scene {
       450,
       80,
       "SALIR",
-      () => (window.location.href = "./lsm-arena.html")
+      () => (window.location.href = "/")
     );
 
     // -----------------------------

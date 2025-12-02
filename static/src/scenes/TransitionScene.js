@@ -9,55 +9,55 @@ export default class TransitionScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("transitionBg", "assets/109.png");
+    this.load.image("transitionBg", "/static/assets/109.png");
 
-    this.load.image("bebidas1", "assets/transitions/bebidas1.png");
-    this.load.image("bebidas2", "assets/transitions/bebidas2.png");
-    this.load.image("bebidas3", "assets/transitions/bebidas3.png");
+    this.load.image("bebidas1", "/static/assets/transitions/bebidas1.png");
+    this.load.image("bebidas2", "/static/assets/transitions/bebidas2.png");
+    this.load.image("bebidas3", "/static/assets/transitions/bebidas3.png");
 
-    this.load.image("casual1", "assets/transitions/casual1.png");
-    this.load.image("casual2", "assets/transitions/casual2.png");
-    this.load.image("casual3", "assets/transitions/casual3.png");
-    this.load.image("casual4", "assets/transitions/casual4.png");
-    this.load.image("casual5", "assets/transitions/casual5.png");
-    this.load.image("casual6", "assets/transitions/casual6.png");
+    this.load.image("casual1", "/static/assets/transitions/casual1.png");
+    this.load.image("casual2", "/static/assets/transitions/casual2.png");
+    this.load.image("casual3", "/static/assets/transitions/casual3.png");
+    this.load.image("casual4", "/static/assets/transitions/casual4.png");
+    this.load.image("casual5", "/static/assets/transitions/casual5.png");
+    this.load.image("casual6", "/static/assets/transitions/casual6.png");
 
-    this.load.image("colores1", "assets/transitions/colores1.png");
-    this.load.image("colores2", "assets/transitions/colores2.png");
-    this.load.image("colores3", "assets/transitions/colores3.png");
+    this.load.image("colores1", "/static/assets/transitions/colores1.png");
+    this.load.image("colores2", "/static/assets/transitions/colores2.png");
+    this.load.image("colores3", "/static/assets/transitions/colores3.png");
 
-    this.load.image("comidas1", "assets/transitions/comidas1.png");
-    this.load.image("comidas2", "assets/transitions/comidas2.png");
-    this.load.image("comidas3", "assets/transitions/comidas3.png");
+    this.load.image("comidas1", "/static/assets/transitions/comidas1.png");
+    this.load.image("comidas2", "/static/assets/transitions/comidas2.png");
+    this.load.image("comidas3", "/static/assets/transitions/comidas3.png");
 
-    this.load.image("cuerpo1", "assets/transitions/cuerpo1.png");
-    this.load.image("cuerpo2", "assets/transitions/cuerpo2.png");
-    this.load.image("cuerpo3", "assets/transitions/cuerpo3.png");
+    this.load.image("cuerpo1", "/static/assets/transitions/cuerpo1.png");
+    this.load.image("cuerpo2", "/static/assets/transitions/cuerpo2.png");
+    this.load.image("cuerpo3", "/static/assets/transitions/cuerpo3.png");
 
-    this.load.image("dias1", "assets/transitions/dias1.png");
+    this.load.image("dias1", "/static/assets/transitions/dias1.png");
 
-    this.load.image("frutas1", "assets/transitions/frutas1.png");
-    this.load.image("frutas2", "assets/transitions/frutas2.png");
-    this.load.image("frutas3", "assets/transitions/frutas3.png");
+    this.load.image("frutas1", "/static/assets/transitions/frutas1.png");
+    this.load.image("frutas2", "/static/assets/transitions/frutas2.png");
+    this.load.image("frutas3", "/static/assets/transitions/frutas3.png");
 
-    this.load.image("meses1", "assets/transitions/meses1.png");
+    this.load.image("meses1", "/static/assets/transitions/meses1.png");
 
-    this.load.image("numeros1", "assets/transitions/numeros1.png");
+    this.load.image("numeros1", "/static/assets/transitions/numeros1.png");
 
-    this.load.image("salud1", "assets/transitions/salud1.png");
-    this.load.image("salud2", "assets/transitions/salud2.png");
-    this.load.image("salud3", "assets/transitions/salud3.png");
-    this.load.image("salud4", "assets/transitions/salud4.png");
-    this.load.image("salud5", "assets/transitions/salud5.png");
+    this.load.image("salud1", "/static/assets/transitions/salud1.png");
+    this.load.image("salud2", "/static/assets/transitions/salud2.png");
+    this.load.image("salud3", "/static/assets/transitions/salud3.png");
+    this.load.image("salud4", "/static/assets/transitions/salud4.png");
+    this.load.image("salud5", "/static/assets/transitions/salud5.png");
 
-    this.load.image("saludos1", "assets/transitions/saludos1.png");
+    this.load.image("saludos1", "/static/assets/transitions/saludos1.png");
 
-    this.load.image("tiempo1", "assets/transitions/tiempo1.png");
-    this.load.image("tiempo2", "assets/transitions/tiempo2.png");
+    this.load.image("tiempo1", "/static/assets/transitions/tiempo1.png");
+    this.load.image("tiempo2", "/static/assets/transitions/tiempo2.png");
 
-    this.load.image("verbos1", "assets/transitions/verbos1.png");
-    this.load.image("verbos2", "assets/transitions/verbos2.png");
-    this.load.image("verbos3", "assets/transitions/verbos3.png");
+    this.load.image("verbos1", "/static/assets/transitions/verbos1.png");
+    this.load.image("verbos2", "/static/assets/transitions/verbos2.png");
+    this.load.image("verbos3", "/static/assets/transitions/verbos3.png");
   }
 
   create() {

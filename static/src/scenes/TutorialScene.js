@@ -1,5 +1,5 @@
-import { tutorialDialogs } from "/src/scenes/dialogs/tutorialdialog.js";
-import SequenceManager from "/src/modules/SequenceManager.js";
+import { tutorialDialogs } from "/static/src/scenes/dialogs/tutorialdialog.js";
+import SequenceManager from "/static/src/modules/SequenceManager.js";
 
 import {
   initWebcam,
@@ -7,7 +7,7 @@ import {
   showWebcam,
   hideWebcam,
   setVideoPositionResponsive,
-} from "/src/utils/webcam.js";
+} from "/static/src/utils/webcam.js";
 
 export default class TutorialScene extends Phaser.Scene {
   constructor() {
@@ -27,11 +27,11 @@ export default class TutorialScene extends Phaser.Scene {
 
   preload() {
     // Fondo tutorial
-    this.load.image("tutorialBg", "assets/105.png"); // Cinemática
+    this.load.image("tutorialBg", "/static/assets/105.png"); // Cinemática
 
     this.load.video(
       "tutorialIntro",
-      "assets/cinematicas/Tutorial.mp4",
+      "/static/assets/cinematicas/Tutorial.mp4",
       "loadeddata",
       false,
       true
@@ -39,16 +39,16 @@ export default class TutorialScene extends Phaser.Scene {
 
     tutorialDialogs.forEach((step) => {
       step.characterImgs.forEach((img) =>
-        this.load.image(img, `assets/personajes/Xochitl/${img}.png`)
+        this.load.image(img, `/static/assets/personajes/Xochitl/${img}.png`)
       );
       step.signImgs.forEach((img) =>
-        this.load.image(img, `assets/signos/${img}.png`)
+        this.load.image(img, `/static/assets/signos/${img}.png`)
       );
     }); // Feedback visual
 
-    this.load.image("successFx", "assets/iconos/OK.png");
-    this.load.image("failFx", "assets/iconos/OKNT.png");
-    this.load.image("timeoutFx", "assets/iconos/TIME.png");
+    this.load.image("successFx", "/static/assets/iconos/OK.png");
+    this.load.image("failFx", "/static/assets/iconos/OKNT.png");
+    this.load.image("timeoutFx", "/static/assets/iconos/TIME.png");
   }
 
   create() {

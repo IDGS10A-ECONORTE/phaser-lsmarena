@@ -21,8 +21,8 @@ export default class CharacterSelectScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("menuBgCharSelect", "assets/101.png");
-    this.load.image("btnTransparent", "assets/blank.png");
+    this.load.image("menuBgCharSelect", "/static/assets/101.png");
+    this.load.image("btnTransparent", "/static/assets/blank.png");
   }
 
   create() {

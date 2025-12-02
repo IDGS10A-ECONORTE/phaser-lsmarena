@@ -12,16 +12,16 @@ export default class MinigameHubScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("hubBg", "assets/110.png");
-    this.load.image("btnTransparent", "assets/blank.png");
-    this.load.image("competitionBtn", "assets/111.png");
+    this.load.image("hubBg", "/static/assets/110.png");
+    this.load.image("btnTransparent", "/static/assets/blank.png");
+    this.load.image("competitionBtn", "/static/assets/111.png");
 
     // Minigames 112–116
-    this.load.image("icon112", "assets/iconos/112.png");
-    this.load.image("icon113", "assets/iconos/113.png");
-    this.load.image("icon114", "assets/iconos/114.png");
-    this.load.image("icon115", "assets/iconos/115.png");
-    this.load.image("icon116", "assets/iconos/116.png");
+    this.load.image("icon112", "/static/assets/iconos/112.png");
+    this.load.image("icon113", "/static/assets/iconos/113.png");
+    this.load.image("icon114", "/static/assets/iconos/114.png");
+    this.load.image("icon115", "/static/assets/iconos/115.png");
+    this.load.image("icon116", "/static/assets/iconos/116.png");
   }
 
   create() {

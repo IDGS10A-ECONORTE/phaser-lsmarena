@@ -1,4 +1,4 @@
-import getSignAssets from "/src/data/signAssets.js";
+import getSignAssets from "/static/src/data/signAssets.js";
 
 export default class PreloadScene extends Phaser.Scene {
     constructor() {

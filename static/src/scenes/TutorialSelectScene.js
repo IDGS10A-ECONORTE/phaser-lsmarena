@@ -7,8 +7,8 @@ export default class TutorialSelectScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("tutorialBg", "assets/102.png"); // Fondo
-    this.load.image("btnTransparent", "assets/blank.png");
+    this.load.image("tutorialBg", "/static/assets/102.png"); // Fondo
+    this.load.image("btnTransparent", "/static/assets/blank.png");
   }
 
   create() {

@@ -51,7 +51,10 @@
   </head>
   <body>
     <div id="game-container"></div>
-    <script src="./phaser.js"></script>
-    <script type="module" src="./src/main.js"></script>
+    <script src="{{ url_for('static', filename='phaser.js') }}"></script>
+    <script
+      type="module"
+      src="{{ url_for('static', filename='src/main.js') }}"
+    ></script>
   </body>
 </html>

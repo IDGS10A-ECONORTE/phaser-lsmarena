@@ -1,15 +1,15 @@
-import { hideWebcam } from "/src/utils/webcam.js";
+import { hideWebcam } from "/static/src/utils/webcam.js";
 
-export default class DefeatScene extends Phaser.Scene {
+export default class VictoryScene extends Phaser.Scene {
   constructor() {
-    super("DefeatScene");
+    super("VictoryScene");
   }
 
   preload() {
-    // Carga el video
+    // Carga el video de victoria
     this.load.video(
-      "defeatVideo",
-      "assets/cinematicas/derrota.mp4",
+      "victoryVideo",
+      "/static/assets/cinematicas/victoria.mp4",
       "loadeddata",
       false,
       true
@@ -27,19 +27,19 @@ export default class DefeatScene extends Phaser.Scene {
 
     // Reproducir video centrado sin escalar
     const video = this.add
-      .video(width / 2, height / 2, "defeatVideo")
-      .setOrigin(0.5); // No escalar, mantener tamaño nativo
+      .video(width / 2, height / 2, "victoryVideo")
+      .setOrigin(0.5); // no escalar
 
     video.setMute(true); // silenciar
     video.play(false); // reproducir solo una vez
 
     // Detectar fin del video
     video.video.onended = () => {
-      video.destroy(); // limpiar
+      video.destroy();
       this.goToPerformance();
     };
 
-    // Opcional: permitir skip con clic
+    // Permitir saltar el video con clic
     this.input.once("pointerdown", () => {
       video.stop();
       video.destroy();

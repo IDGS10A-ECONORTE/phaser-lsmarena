@@ -1,13 +1,13 @@
 // =============================================================
 //  SequenceManager.js – versión con lógica de score por dificultad
 // =============================================================
-import SocketClient from "/src/modules/socketClient.js";
-import { captureWebcamFrame } from "/src/utils/webcam.js";
+import SocketClient from "/static/src/modules/socketClient.js";
+// import { captureWebcamFrame } from "/static/src/data/src/utils/webcam.js";
 
-import easy from "/src/data/easydiff.js";
-import medium from "/src/data/normaldiff.js";
-import hard from "/src/data/harddiff.js";
-import words from "/src/data/words.js";
+import easy from "/static/src/data/easydiff.js";
+import medium from "/static/src/data/normaldiff.js";
+import hard from "/static/src/data/harddiff.js";
+import words from "/static/src/data/words.js";
 
 export default class SequenceManager {
   constructor(
