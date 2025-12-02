@@ -4,4 +4,4 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
 EXPOSE 5000
-CMD [ "py", "main.py" ]
+CMD [ "python", "main.py" ]
